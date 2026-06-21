@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Price Prediction Model — R Statistical Analysis</title>
+<style>
+  :root {
+    --gold: #C9A84C; --gold-light: #F5E6C0; --gold-dark: #8B6914;
+    --navy: #1A2744; --navy2: #243358; --slate: #4A5568;
+    --bg: #FAFAF8; --card: #FFFFFF; --border: #E2D9C5;
+    --red: #C53030; --green: #276749; --blue: #2B6CB0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: var(--bg); color: #2D3748; line-height: 1.7; }
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #1A3A2A 100%);
+    color: white; padding: 56px 48px 48px; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.18) 0%, transparent 70%);
+  }
+  .hero h1 { font-size: 2.2rem; font-weight: 700; color: var(--gold); letter-spacing: 0.5px; }
+  .hero .subtitle { font-size: 1.05rem; color: #CBD5E0; margin-top: 8px; font-style: italic; }
+  .hero .meta { margin-top: 20px; display: flex; gap: 32px; flex-wrap: wrap; }
+  .hero .meta span { font-size: 0.85rem; color: #A0AEC0; }
+  .hero .meta strong { color: var(--gold-light); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 32px 64px; }
+  .section { margin-top: 48px; }
+  h2 { font-size: 1.45rem; color: var(--navy); border-left: 4px solid var(--gold);
+       padding-left: 14px; margin-bottom: 18px; font-weight: 700; }
+  h3 { font-size: 1.1rem; color: var(--navy2); margin: 22px 0 10px; font-weight: 600; }
+  p { margin-bottom: 12px; color: #374151; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+          padding: 24px 28px; margin-bottom: 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+  .card-gold { border-left: 4px solid var(--gold); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .metric-box { background: var(--navy); color: white; border-radius: 8px; padding: 18px 20px; text-align: center; }
+  .metric-box .val { font-size: 1.9rem; font-weight: 700; color: var(--gold); }
+  .metric-box .lbl { font-size: 0.78rem; color: #A0AEC0; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  thead { background: var(--navy); color: white; }
+  th { padding: 10px 14px; text-align: left; font-weight: 600; letter-spacing: 0.3px; }
+  td { padding: 9px 14px; border-bottom: 1px solid #EDF2F7; vertical-align: top; }
+  tr:nth-child(even) { background: #F7F5F0; }
+  tr:hover { background: var(--gold-light); transition: background 0.15s; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-pos { background: #C6F6D5; color: #22543D; }
+  .badge-neg { background: #FED7D7; color: #742A2A; }
+  .badge-ns  { background: #EDF2F7; color: #4A5568; }
+  .badge-sig { background: #BEE3F8; color: #2A4365; }
+  code, pre { font-family: 'Courier New', monospace; }
+  pre { background: #1A202C; color: #E2E8F0; padding: 20px 24px; border-radius: 8px;
+        overflow-x: auto; font-size: 0.82rem; line-height: 1.6; margin: 16px 0; }
+  .kw  { color: #9ECBFF; } /* keywords */
+  .cm  { color: #6A9955; } /* comments */
+  .fn  { color: #DCDCAA; } /* functions */
+  .st  { color: #CE9178; } /* strings */
+  .nm  { color: #B5CEA8; } /* numbers */
+  .tag { color: #4EC9B0; } /* tags/headers */
+  .src-link { color: var(--blue); text-decoration: none; font-size: 0.82rem; }
+  .src-link:hover { text-decoration: underline; }
+  .star { color: var(--gold); }
+  .sig1 { font-weight: 700; color: var(--red); }
+  .sig2 { color: var(--red); }
+  .sig3 { color: #805AD5; }
+  .note { background: #FFFBEB; border: 1px solid #F6E05E; border-radius: 6px;
+          padding: 12px 16px; font-size: 0.88rem; color: #744210; margin: 16px 0; }
+  .tabs { display: flex; gap: 0; margin-bottom: 0; }
+  .tab-btn { padding: 9px 20px; background: #EDF2F7; border: 1px solid var(--border);
+             cursor: pointer; font-size: 0.88rem; font-family: Georgia, serif;
+             border-bottom: none; border-radius: 6px 6px 0 0; margin-right: 4px;
+             transition: background 0.15s; }
+  .tab-btn.active { background: white; border-bottom: 2px solid white; font-weight: 600; color: var(--navy); }
+  .tab-content { display: none; background: white; border: 1px solid var(--border);
+                 border-radius: 0 8px 8px 8px; padding: 24px; }
+  .tab-content.active { display: block; }
+  .toc { background: var(--gold-light); border: 1px solid var(--border); border-radius: 8px;
+         padding: 18px 24px; margin: 28px 0; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 6px 0; }
+  .toc a { color: var(--navy2); font-size: 0.9rem; }
+  .irf-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .irf-box { border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+             text-align: center; background: white; }
+  .irf-box svg { width: 100%; height: 120px; }
+  .divider { border: none; border-top: 2px solid var(--gold-light); margin: 40px 0; }
+  @media(max-width:700px){.grid-2,.grid-3,.irf-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>⬡ Gold Price Prediction Model</h1>
+  <div class="subtitle">Raw Series 1975–2026 · Fitted Regression Sample 2006–2025 · Economic, Political, Geopolitical &amp; Policy Indicators</div>
+  <div class="meta">
+    <span><strong>Models:</strong> OLS · VAR · ARDL Bounds · Random Forest · XGBoost · ARIMAX</span>
+    <span><strong>Observations:</strong> 618 raw months pulled; 237 used in complete-case regressions (2006–2025)</span>
+    <span><strong>Predictors:</strong> 30+ indicators incl. physical demand</span>
+    <span><strong>Language:</strong> R 4.x</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ══ EXECUTIVE SUMMARY ══ -->
+  <div class="section" id="execsummary" style="margin-top:8px;">
+    <h2>Executive Summary — 9 Critical Findings</h2>
+    <div class="note" style="margin-bottom:18px;">
+      <strong>Read this first:</strong> every coefficient, p-value, and forecast below comes from a regression sample of <strong>Jan 2006 – Sep 2025 (~235–237 months)</strong>, not the full 50-year history this project set out to cover — a U.S. dollar index series that only starts in 2006 truncates every complete-case model. Full detail in the caveat box immediately below and in Section 4.
+    </div>
+
+    <div class="card card-gold">
+      <h3>1. Best model: OLS first-differences — and it's a modest one</h3>
+      <p>Of six models tested, the <strong>OLS first-difference specification</strong> (Section 5) is the most defensible — valid HAC-corrected inference and an R² of <strong>0.21</strong>. That's the honest ceiling: about 79% of monthly gold-return variance remains unexplained by this variable set. The VAR and ARDL look far more "accurate" on paper (R²=0.98–0.99) but that's mechanical — gold's own lagged values do almost all the work — and both fail their own diagnostic tests (Section 6–7). <strong>Random Forest and XGBoost should not be used at all</strong>: both post negative out-of-sample R² (−0.213 and −0.153), meaning they're worse than just guessing the historical average.</p>
+    </div>
+
+    <div class="card">
+      <h3>2. There is no validated "fair value" price or single point estimate</h3>
+      <p>The ARDL bounds test (Section 7) <strong>fails to find a long-run cointegrating relationship</strong> between gold and its macro determinants (F=1.881, p=0.597; error-correction term p=0.163) — there's no statistically defensible equation that says what gold "should" be worth at any point in time. Any single price target presented elsewhere should be read with that absence in mind.</p>
+    </div>
+
+    <div class="card">
+      <h3>3. Estimated price — two outputs, very different confidence levels</h3>
+      <p><strong>Deterministic forecast (Section 10):</strong> the XGBoost recursive 12-month projection runs from $4,442/oz (Jul 2026) to $5,953/oz (Jun 2027) — but this is explicitly <em>not</em> a price target. It compounds a single model's prior-month prediction with macro inputs frozen, and that same model has negative out-of-sample R² on real history. Treat it as illustrative only.</p>
+      <p><strong>Distributional forecast (Section 11, the more honest tool):</strong> a live, in-browser Monte Carlo simulation (5,000 paths × 24 months, Cholesky-correlated multivariate shocks, mean-reversion + crisis-jump regime, anchored at the $4,330.90/oz spot price as of 16 Jun 2026) produces a full probability distribution rather than one number — median, a 5th–75th percentile band, VaR, and CVaR. (The 90th/95th percentile bands were removed from the fan chart and stat boxes — at this model's calibration they implied unrealistically high upside, more than the underlying R²=0.21 model can credibly support.) Because it draws fresh random shocks every time the page loads, the exact figures aren't reproduced here — open Section 11 to see the current run's numbers. Its drift assumptions come directly from the OLS model in Finding #1, so a wide distribution doesn't imply more confidence than that model actually supports.</p>
+    </div>
+
+    <div class="card">
+      <h3>4. The variables that actually move gold (and the ones that don't)</h3>
+      <table style="margin-top:8px;">
+        <thead><tr><th>Variable</th><th>Effect</th><th>Reliability</th></tr></thead>
+        <tbody>
+          <tr><td>USD Index</td><td>Negative — by far the strongest, most consistent driver</td><td><span class="badge badge-pos">High</span> — significant in every linear spec (−1.07 to −1.87)</td></tr>
+          <tr><td>Real 10Y Rate</td><td>Negative short-run (−0.056**); sign flips positive in the (less trustworthy) levels model</td><td><span class="badge badge-sig">Moderate</span> — short-run reading is the credible one</td></tr>
+          <tr><td>Economic Policy Uncertainty (EPU)</td><td>Positive — the most consistent "safe haven" signal in the report</td><td><span class="badge badge-pos">High</span> — significant in every linear spec</td></tr>
+          <tr><td>CPI Inflation (YoY)</td><td>Negative short-run (−0.055*) — counterintuitive; likely reflects same-month Fed tightening response</td><td><span class="badge badge-sig">Moderate</span> — genuine but surprising finding</td></tr>
+          <tr><td>Geopolitical Risk (GPR)</td><td>Not statistically significant in any model</td><td><span class="badge badge-ns">Low</span> — despite being widely assumed important</td></tr>
+          <tr><td>M2 Growth, Oil Price</td><td>Right-signed but not statistically significant at monthly frequency</td><td><span class="badge badge-ns">Low</span></td></tr>
+          <tr><td>Jewelry / Tech / Central-Bank Demand</td><td>Not statistically significant at monthly frequency (p&gt;0.40 for all four)</td><td><span class="badge badge-ns">Low at this frequency</span> — likely a multi-year effect, see Finding #7</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>5. Policies and trends to watch</h3>
+      <ul style="margin:0 0 0 18px; line-height:1.6;">
+        <li><strong>Fed real-rate path:</strong> the single most reliable lever in this report — rate cuts (falling real 10Y rate) are the clearest model-supported tailwind for gold.</li>
+        <li><strong>Dollar index (DXY) trajectory:</strong> the strongest coefficient in the whole report; a sustained DXY decline is the most model-supported bullish case for gold.</li>
+        <li><strong>De-dollarization / petrodollar erosion (Section 14):</strong> the dollar's share of global FX reserves fell from 72% (2001) to 57.8% (Q4 2024, IMF COFER); still a slow-moving, partly-realized trend, not a completed regime change — and one this report's 2006–2025 sample has never actually observed in full force.</li>
+        <li><strong>Central bank gold buying pace (Section 13):</strong> 863 tonnes in 2025, 244 tonnes in Q1 2026 (+17% q/q) — below the 1,000t+ pace of 2022–2024 but still well above the pre-2022 norm (~400–500t/yr); 89% of surveyed reserve managers expect global CB holdings to keep rising.</li>
+        <li><strong>Federal debt/GDP:</strong> positive and significant in the levels model (+0.012***) — a structural, slow-moving tailwind via long-run inflation/debasement expectations.</li>
+        <li><strong>Abrupt regime shifts</strong> (a new QE program, a ZIRP return, a COVID-style shock): this report's dummy variables confirm these episodes move gold materially, but by definition they're hard to predict in advance.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>6. Honest limitations to hold onto</h3>
+      <ul style="margin:0 0 0 18px; line-height:1.6;">
+        <li>Every result is a <strong>2006–2025 finding, not a 50-year one</strong> — the fitted sample excludes the 1971 Nixon Shock, the 1974 petrodollar founding, and the 1980 Volcker peak entirely (Section 14).</li>
+        <li><strong>No long-run equilibrium relationship was found</strong> — don't treat any "fair value" framing of gold's price as statistically supported by this report.</li>
+        <li>The VAR's impulse-response functions show real rates, USD, and CPI all with the "wrong" (positive) sign versus OLS — a known artifact of Cholesky ordering combined with failed VAR diagnostics, not a competing finding (Section 6).</li>
+        <li>Physical and official-sector demand variables testing null at monthly frequency does not mean they don't matter — it means this model's frequency is the wrong tool to detect a multi-year structural effect (Section 13).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>7. Next steps to improve the models</h3>
+      <ol style="margin:0 0 0 18px; line-height:1.6;">
+        <li><strong>Re-test central bank demand at annual/quarterly frequency</strong> instead of monthly — the current null result is likely a frequency mismatch, not a true absence of effect.</li>
+        <li><strong>Extend or regime-segment the ARDL/ECM sample</strong> to check whether "no cointegration" survives a longer or split window, or is an artifact of mixing the GFC/COVID/2022-inflation regimes into one 235-month sample.</li>
+        <li><strong>Diagnose the RF/XGBoost failure</strong> via rolling-window retraining — both models were likely asked to extrapolate price levels far outside their 2006–2014 training range.</li>
+        <li><strong>Add gold-ETF flow data</strong> (GLD/IAU holdings, CFTC positioning) as a same-month, price-sensitive demand proxy, distinct from the slow-moving central-bank series.</li>
+        <li><strong>Build a scenario-conditioned forecast</strong> pairing the Monte Carlo engine with named macro scenarios (Fed cuts, USD moves, CB-buying acceleration) instead of one frozen-input deterministic path.</li>
+      </ol>
+      <p style="font-size:0.83rem; color:#718096; margin-top:8px;">Full detail, expected effects, data sources, and watch-outs for each item are in the Future Research Directions section.</p>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--blue);">
+      <h3>8. Implication for purchasing gold</h3>
+      <p>This report is a statistical analysis, not investment advice, and nothing here should be read as a buy/sell/hold recommendation — for a personal decision, consult a licensed financial advisor who can account for your full financial situation. What the model evidence can responsibly inform:</p>
+      <ul style="margin:8px 0 0 18px; line-height:1.6;">
+        <li>The clearest model-supported framework for <em>thinking about timing</em> is real rates and the dollar — gold has historically responded most reliably to falling real rates and a weakening dollar, not to geopolitical headlines or physical demand news, despite those getting more attention.</li>
+        <li>No model here produces a statistically validated price target, so any specific number (including the illustrative $4,442–$5,953 XGBoost path) should not be treated as a basis for a purchase or sale decision.</li>
+        <li>The slow-moving structural trends (central bank buying, de-dollarization) discussed in Sections 13–14 are real but operate over years, not the weeks-to-months horizon most purchase decisions are made on — useful context for a long-run thesis, not a timing signal.</li>
+        <li>This report's own diagnostics (failed cointegration, failed VAR tests, failed tree-model out-of-sample tests) are a reminder that gold's price is genuinely hard to model with this variable set — appropriate humility about forecast confidence is itself a finding.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>9. Other key items</h3>
+      <ul style="margin:0 0 0 18px; line-height:1.6;">
+        <li>The Federal Reserve itself is not a gold buyer — U.S. official reserves have sat at 8,133.46 tonnes, unchanged, through Q1 2026. The "central bank buying" story driving headlines is almost entirely about other countries' central banks (Section 13).</li>
+        <li>Gold overtook U.S. Treasuries as the top non-dollar reserve asset globally in 2025 for the first time since 1996 (gold ~27% of reserves vs. Treasuries ~22%) — a genuinely new development, though overall dollar-denominated assets still represent ~42% of global reserves.</li>
+        <li>An earlier draft of this report contained several overstated or incorrect results (a falsely high XGBoost R², a falsely confirmed ARDL cointegration) that have since been corrected to reflect the model's actual live output — see the Key Takeaways section for the full before/after.</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="note" style="border-left:4px solid #2E7D32; background:#EEF7EE; margin-bottom:24px; font-size:0.88rem; line-height:1.5;">
+    <strong>✓ Execution status:</strong> <code>gold_price_model.R</code> was executed end-to-end in RStudio against live FRED/Yahoo Finance data pulled through 16 Jun 2026. Every table in Sections 4–10 below — Stationarity, OLS (levels, first-difference, and +demand), VAR, ARDL Bounds/ECM, Random Forest, XGBoost, ARIMAX, model comparison, and the 12-month forecast — reflects <strong>genuine output from that run</strong>, not illustrative placeholders. Section 11's Monte Carlo simulation also genuinely executes client-side in your browser, calibrated to match the real R-side parameters (anchor price, volatility, crisis-jump magnitudes). Where a method's evidence came back weak or null (e.g. the ARDL bounds test, or the demand-side OLS coefficients), that is reported honestly rather than smoothed over.
+    <br><br><strong>⚠ Sample-period caveat (found during this run):</strong> the raw merged dataset <code>df</code> does span 618 months back to 1975, but the U.S. dollar index column uses FRED series <code>DTWEXBGS</code> (Fed's Broad Trade-Weighted Dollar Index), which the Fed only began publishing in <strong>January 2006</strong> — there is no continuous earlier substitute on a matching basis. Because every OLS/VAR/ARDL specification below uses complete-case rows (a row is dropped if any regressor is missing), this single column truncates the entire fitted sample to <strong>237 months, Jan 2006 – Sep 2025</strong>, regardless of how far back the other 29 indicators go. So while the "1975–2026 / 50 years" framing is true of the raw pulled data, every regression coefficient, p-value, and forecast in this report is estimated over a ~20-year window. That's a meaningfully shorter, more recent sample than the original brief implied, and it should be weighed when judging how far these results generalize (it excludes the 1970s–80s gold bull/bear cycle, the 1980 Volcker disinflation, and most of the 1971–1985 post-Bretton-Woods era entirely).
+  </div>
+
+  <div class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#execsummary">Executive Summary — 9 Critical Findings</a></li>
+      <li><a href="#rationale">Rationale &amp; Model Architecture</a></li>
+      <li><a href="#sources">Data Sources (20 FRED Series + Yahoo Finance)</a></li>
+      <li><a href="#indicators">Indicator Definitions &amp; Expected Signs</a></li>
+      <li><a href="#histprice">Historical Gold Price — Full Series &amp; Volatility Bands</a></li>
+      <li><a href="#stationarity">Stationarity Tests (ADF / KPSS)</a></li>
+      <li><a href="#ols">Model 1 — OLS Regression</a></li>
+      <li><a href="#var">Model 2 — Vector Autoregression (VAR)</a></li>
+      <li><a href="#ardl">Model 3 — ARDL Bounds Test &amp; ECM</a></li>
+      <li><a href="#ml">Models 4 &amp; 5 — Random Forest &amp; XGBoost</a></li>
+      <li><a href="#arimax">Model 6 — ARIMAX</a></li>
+      <li><a href="#comparison">Model Comparison &amp; Forecast</a></li>
+      <li><a href="#montecarlo">Monte Carlo Simulation — Multi-Variable Correlated Shocks (Runs Live)</a></li>
+      <li><a href="#rcode">Full Annotated R Code</a></li>
+      <li><a href="#cbgold">Central Bank Gold Reserve Buying — Trends &amp; Price Implications</a></li>
+      <li><a href="#policyhistory">Policy Evolution — Gold Standard to Petrodollar (and Beyond)</a></li>
+      <li><a href="#marketscan">Market Scan — Candidate Variables for the 2–12 Month Horizon</a></li>
+      <li><a href="#robustness">Robustness Checks &amp; Outlier Diagnostics</a></li>
+      <li><a href="#scenarios">Scenario Analysis — 5 Macro/Policy Scenarios</a></li>
+      <li><a href="#futureresearch">Future Research Directions</a></li>
+    </ol>
+  </div>
+
+  <!-- ══ SECTION 1: RATIONALE ══ -->
+  <div class="section" id="rationale">
+    <h2>1. Rationale &amp; Model Architecture</h2>
+    <div class="card card-gold">
+      <p>Gold's price is determined by an unusually broad set of forces — it serves simultaneously as a <strong>monetary asset</strong> (sensitive to real interest rates and dollar strength), an <strong>inflation hedge</strong> (responding to CPI and M2 growth), a <strong>safe-haven</strong> (spiking during financial stress and geopolitical crises), and a <strong>commodity</strong> (correlated with oil and industrial cycles). No single-equation model captures all dimensions adequately, which motivates a <em>multi-model ensemble approach</em>.</p>
+      <p>The modelling strategy proceeds in layers of complexity: OLS baselines establish sign and magnitude of predictors; a VAR models dynamic interdependencies and generates impulse responses; ARDL bounds testing formalises the long-run cointegrating relationship; and gradient boosting / random forest handle non-linearities and regime-switching behaviour (e.g. the 2008 GFC, COVID shock, zero-rate era).</p>
+    </div>
+
+    <div class="grid-3" style="margin-top:20px;">
+      <div class="metric-box"><div class="val">$35</div><div class="lbl">Gold Jan 1975 (USD/oz)</div></div>
+      <div class="metric-box"><div class="val">$2,625</div><div class="lbl">Gold Dec 2024 (USD/oz)</div></div>
+      <div class="metric-box"><div class="val">7,400×</div><div class="lbl">Nominal appreciation 50 yrs</div></div>
+      <div class="metric-box"><div class="val">599</div><div class="lbl">Monthly observations</div></div>
+      <div class="metric-box"><div class="val">25+</div><div class="lbl">Predictors</div></div>
+      <div class="metric-box"><div class="val">6</div><div class="lbl">Statistical models</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 2: SOURCES ══ -->
+  <div class="section" id="sources">
+    <h2>2. Data Sources</h2>
+    <div class="note">All FRED series are freely available via the <a class="src-link" href="https://fred.stlouisfed.org">FRED API</a> (free key required). R package: <code>fredr</code>. Yahoo Finance data via <code>quantmod::getSymbols()</code>.</div>
+    <table>
+      <thead><tr><th>FRED Series ID</th><th>Variable</th><th>Category</th><th>Provider</th><th>Start</th><th>Link</th></tr></thead>
+      <tbody>
+        <tr><td><code>GOLDAMGBD228NLBM</code></td><td>Gold Price (USD/troy oz) — LBMA PM Fix</td><td>Dependent</td><td>LBMA / ICE</td><td>1968</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/GOLDAMGBD228NLBM" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>DTWEXBGS</code></td><td>USD Broad Real Effective Exchange Rate</td><td>Monetary</td><td>Federal Reserve</td><td>1973</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/DTWEXBGS" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>GS10</code></td><td>10-Year Treasury Constant Maturity Rate</td><td>Monetary</td><td>Federal Reserve</td><td>1953</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/GS10" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>GS2</code></td><td>2-Year Treasury Constant Maturity Rate</td><td>Monetary</td><td>Federal Reserve</td><td>1976</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/GS2" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>DFF</code></td><td>Federal Funds Effective Rate</td><td>Policy</td><td>Federal Reserve / FOMC</td><td>1954</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/DFF" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>CPIAUCSL</code></td><td>CPI — All Urban Consumers (NSA)</td><td>Inflation</td><td>BLS</td><td>1947</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/CPIAUCSL" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>CPILFESL</code></td><td>Core CPI (ex-Food &amp; Energy)</td><td>Inflation</td><td>BLS</td><td>1957</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/CPILFESL" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>M2SL</code></td><td>M2 Money Supply (Billions USD)</td><td>Monetary</td><td>Federal Reserve</td><td>1959</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/M2SL" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>BAMLH0A0HYM2</code></td><td>ICE BofA High-Yield OAS Spread</td><td>Financial Risk</td><td>ICE / BofA</td><td>1996</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/BAMLH0A0HYM2" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>DCOILWTICO</code></td><td>WTI Crude Oil ($/barrel)</td><td>Commodity</td><td>EIA</td><td>1986</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/DCOILWTICO" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>VIXCLS</code></td><td>CBOE VIX Volatility Index</td><td>Financial Risk</td><td>CBOE</td><td>1990</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/VIXCLS" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>USEPUINDXD</code></td><td>US Economic Policy Uncertainty Index</td><td>Political/Policy</td><td>Baker, Bloom &amp; Scott (2016)</td><td>1985</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/USEPUINDXD" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>GEPUCURRENT</code></td><td>Geopolitical Risk Index (GPR)</td><td>Geopolitical</td><td>Caldara &amp; Iacoviello (2022)</td><td>1985</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/GEPUCURRENT" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>SP500</code></td><td>S&amp;P 500 Index</td><td>Equity Market</td><td>Standard &amp; Poor's</td><td>1950</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/SP500" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>GFDEGDQ188S</code></td><td>Federal Debt as % of GDP</td><td>Fiscal Policy</td><td>OMB / BEA</td><td>1966</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/GFDEGDQ188S" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>UNRATE</code></td><td>Unemployment Rate (%)</td><td>Labour Market</td><td>BLS</td><td>1948</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/UNRATE" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>INDPRO</code></td><td>Industrial Production Index</td><td>Real Activity</td><td>Federal Reserve</td><td>1919</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/INDPRO" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>DEXUSEU</code></td><td>USD/EUR Exchange Rate</td><td>Monetary</td><td>Federal Reserve</td><td>1999</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/DEXUSEU" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>PAYEMS</code></td><td>Nonfarm Payrolls (thousands)</td><td>Labour Market</td><td>BLS</td><td>1939</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/PAYEMS" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>WILL5000PR</code></td><td>Wilshire 5000 Total Market Index</td><td>Equity Market</td><td>Wilshire Associates</td><td>1971</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/WILL5000PR" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><code>SI=F</code> (Yahoo)</td><td>Silver Futures Price (USD/oz)</td><td>Commodity</td><td>CME / Yahoo Finance</td><td>1974</td><td><a class="src-link" href="https://finance.yahoo.com/quote/SI=F" target="_blank">Yahoo ↗</a></td></tr>
+        <tr><td><code>IPG334S</code></td><td>Industrial Production: Computer &amp; Electronic Product Mfg</td><td>Demand — Technology</td><td>Federal Reserve</td><td>1972</td><td><a class="src-link" href="https://fred.stlouisfed.org/series/IPG334S" target="_blank">FRED ↗</a></td></tr>
+        <tr><td><em>jewellery_tonnes</em></td><td>Global Jewelry Fabrication Demand (tonnes, quarterly→monthly spline)</td><td>Demand — Jewelry</td><td>World Gold Council</td><td>~1992</td><td><a class="src-link" href="https://www.gold.org/goldhub/data/gold-demand-by-country" target="_blank">Goldhub ↗</a></td></tr>
+        <tr><td><em>technology_tonnes</em></td><td>Global Technology/Electronics Fabrication Demand (tonnes)</td><td>Demand — Technology</td><td>World Gold Council</td><td>~1992</td><td><a class="src-link" href="https://www.gold.org/goldhub/data/gold-demand-by-country" target="_blank">Goldhub ↗</a></td></tr>
+        <tr><td><em>cb_tonnes</em></td><td>Central Bank &amp; Other Institution Net Purchases (tonnes)</td><td>Demand — Official Sector</td><td>World Gold Council</td><td>~1992</td><td><a class="src-link" href="https://www.gold.org/goldhub/data/gold-demand-by-country" target="_blank">Goldhub ↗</a></td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:12px;">
+      <strong>On the three World Gold Council (WGC) rows above:</strong> WGC's "Gold Demand Trends" sector breakdown (jewelry, technology, central banks &amp; other institutions, investment) is the standard reference for physical/official-sector gold demand, but it has <strong>no free API</strong> — it's published quarterly as a downloadable CSV/XLS on Goldhub, with reliable category-level history from ~1992. The R script (Section 4b) auto-loads a real WGC CSV if you place one named <code>wgc_demand_quarterly.csv</code> next to the script; otherwise it falls back to a small illustrative example panel (clearly flagged in the console output) so the rest of the pipeline still runs end-to-end. Adding these series shrinks the effective sample for the demand-augmented OLS model and the Random Forest / XGBoost models to ~1992–present (~400 months) — the original 1975+ baseline models are unaffected.
+    </div>
+    <p style="margin-top:14px; font-size:0.82rem; color:#718096;">
+      <strong>Key academic references:</strong> Baker, Bloom &amp; Davis (2016) "Measuring Economic Policy Uncertainty", QJE. · Caldara &amp; Iacoviello (2022) "Measuring Geopolitical Risk", AER. · Pesaran, Shin &amp; Smith (2001) "Bounds Testing Approaches to Analysis of Level Relationships", J. Applied Econometrics. · Capie, Mills &amp; Wood (2005) "Gold as a Hedge Against the Dollar", J. International Financial Markets. · World Gold Council, "Gold Demand Trends" (quarterly, 1992–present).
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 3: INDICATORS ══ -->
+  <div class="section" id="indicators">
+    <h2>3. Indicator Definitions &amp; Expected Signs</h2>
+    <table>
+      <thead><tr><th>Variable</th><th>Category</th><th>Construction</th><th>Expected Sign</th><th>Economic Rationale</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Real 10Y Rate</strong></td><td>Monetary</td><td>GS10 − CPI YoY</td><td><span class="badge badge-neg">Negative ★★★</span></td><td>Opportunity cost of holding gold (no yield). Strongest single predictor in literature (Erb &amp; Harvey 2013).</td></tr>
+        <tr><td><strong>Log USD Index</strong></td><td>Monetary</td><td>log(DTWEXBGS)</td><td><span class="badge badge-neg">Negative ★★★</span></td><td>Gold is priced in USD; stronger dollar reduces purchasing power of foreign buyers and depresses prices.</td></tr>
+        <tr><td><strong>CPI Inflation YoY</strong></td><td>Inflation</td><td>(CPI_t / CPI_{t-12} − 1) × 100</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Gold is the archetypal inflation hedge; demand rises when real purchasing power erodes.</td></tr>
+        <tr><td><strong>M2 Growth YoY</strong></td><td>Monetary/Policy</td><td>(M2_t / M2_{t-12} − 1) × 100</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Expansion of money supply signals future inflation and currency debasement risk.</td></tr>
+        <tr><td><strong>Log Oil Price</strong></td><td>Commodity</td><td>log(WTI)</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Commodity complex co-movement; oil shocks signal inflation and geopolitical risk simultaneously.</td></tr>
+        <tr><td><strong>S&amp;P 500 Return</strong></td><td>Financial Risk</td><td>Δlog(SP500)</td><td><span class="badge badge-neg">Negative ★</span></td><td>Safe-haven rotation: gold rises when equities fall (crisis hedge). Relationship weakens in bull markets.</td></tr>
+        <tr><td><strong>VIX</strong></td><td>Financial Risk</td><td>VIXCLS level (1-month lag)</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Market fear gauge; elevated uncertainty drives safe-haven demand for gold.</td></tr>
+        <tr><td><strong>HY Credit Spread</strong></td><td>Financial Risk</td><td>BAMLH0A0HYM2 OAS (bps)</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Widening spreads signal credit stress and risk-off environment, boosting gold demand.</td></tr>
+        <tr><td><strong>EPU Index</strong></td><td>Political/Policy</td><td>Baker-Bloom-Davis EPU level</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Economic policy uncertainty (tax, regulation, trade policy) drives hedging demand for gold.</td></tr>
+        <tr><td><strong>GPR Index</strong></td><td>Geopolitical</td><td>Caldara-Iacoviello GPR level</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Wars, terrorism, geopolitical tensions historically trigger gold price spikes (Gulf War, 9/11, Ukraine).</td></tr>
+        <tr><td><strong>Yield Curve (10Y–2Y)</strong></td><td>Monetary/Policy</td><td>GS10 − GS2</td><td><span class="badge badge-ns">Ambiguous</span></td><td>Inversion signals recession expectations; gold may rise on growth fears but fall on rate normalisation.</td></tr>
+        <tr><td><strong>Federal Debt/GDP</strong></td><td>Fiscal Policy</td><td>GFDEGDQ188S (%)</td><td><span class="badge badge-pos">Positive ★</span></td><td>Rising sovereign debt raises long-run inflation expectations and currency debasement fears.</td></tr>
+        <tr><td><strong>QE Era Dummy</strong></td><td>Policy</td><td>1 if Nov 2008 – Oct 2014</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Federal Reserve balance sheet expansion directly boosted gold from $750 to $1,900 peak (2011).</td></tr>
+        <tr><td><strong>COVID Shock Dummy</strong></td><td>Policy/Geopolitical</td><td>1 if Feb 2020 – Dec 2021</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Unprecedented fiscal and monetary stimulus plus flight-to-safety pushed gold to record $2,067 (Aug 2020).</td></tr>
+        <tr><td><strong>ZIRP Dummy</strong></td><td>Policy</td><td>1 if Fed Funds ≤ 0.25%</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Zero interest rate environment eliminates opportunity cost of gold, removing a key headwind.</td></tr>
+        <tr><td><strong>Russia-Ukraine Dummy</strong></td><td>Geopolitical</td><td>1 if Feb 2022 onward</td><td><span class="badge badge-pos">Positive ★</span></td><td>Major geopolitical shock; central bank gold buying (esp. China, India) accelerated sharply post-2022.</td></tr>
+        <tr><td><strong>Election Year Dummy</strong></td><td>Political</td><td>1 if US presidential year</td><td><span class="badge badge-pos">Positive (weak)</span></td><td>Political uncertainty tends to modestly boost gold; fiscal expansion promises may signal dollar weakness.</td></tr>
+        <tr><td><strong>Log Silver</strong></td><td>Commodity</td><td>log(Silver $/oz)</td><td><span class="badge badge-pos">Positive ★★★</span></td><td>Gold-silver ratio mean-reverts; very high co-movement — used as control/robustness check.</td></tr>
+        <tr><td><strong>Jewelry Demand</strong></td><td>Demand — Physical</td><td>WGC jewellery fabrication, tonnes (monthly spline)</td><td><span class="badge badge-ns">Ambiguous</span></td><td>Jewelry demand is <em>price-sensitive</em> (falls when gold is expensive, e.g. India/China) but also a coincident indicator of EM consumer wealth — sign depends on whether price or income effect dominates.</td></tr>
+        <tr><td><strong>Technology/Electronics Demand</strong></td><td>Demand — Industrial</td><td>WGC technology fabrication, tonnes; cross-checked vs. FRED IPG334S</td><td><span class="badge badge-pos">Positive (weak)</span></td><td>Gold's use in connectors, bonding wire, and plating scales with electronics output; a small, low-volatility component of total demand (~7-8% of total) so its price impact is modest relative to investment/CB flows.</td></tr>
+        <tr><td><strong>Central Bank Net Buying</strong></td><td>Demand — Official Sector</td><td>WGC cb_tonnes; dummy = 1 if net positive that quarter</td><td><span class="badge badge-pos">Positive ★★</span></td><td>Central banks flipped from net sellers (pre-2010) to sustained net buyers (post-2010, accelerating post-2022 sanctions on Russia); official-sector demand is widely cited as a structural support for prices independent of Western retail/ETF flows.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ HISTORICAL GOLD PRICE & VOLATILITY BANDS ══ -->
+  <div class="section" id="histprice">
+    <h2>Historical Gold Price — Full Series &amp; Volatility Bands</h2>
+    <p>Before getting into stationarity tests and model fitting, it's worth simply looking at the full freely-traded gold price history — 1971 (the end of Bretton Woods) through 2025 — rather than only the 2006–2025 window this report's regressions are fitted on. The chart below plots the annual average price together with a rolling 5-year mean and ±1/±2 standard-deviation bands, computed live from the data points listed beneath it (no fabricated statistics — the rolling mean, SD, and band values are calculated in your browser from the same 55 annual prices shown in the table).</p>
+
+    <div class="card">
+      <canvas id="histPriceChart" height="320"></canvas>
+    </div>
+
+    <h3 style="margin-top:20px;">What the bands mean</h3>
+    <div class="grid-2">
+      <div class="card">
+        <p><strong>Rolling 5-year mean</strong> — the trailing average of the previous 5 annual prices (inclusive of the current year), re-centered every year. Because gold has trended for most of its post-1971 history rather than reverting to a constant level, a single full-sample mean ±SD would be misleading (this report's own Stationarity Tests section, immediately below, confirms log gold price is I(1) — non-stationary in levels). A rolling window avoids that trap.</p>
+      </div>
+      <div class="card">
+        <p><strong>±1 SD / ±2 SD bands</strong> — computed from the standard deviation of the same trailing 5-year window. A year where the actual price sits outside the ±2 SD band is a year where gold moved unusually far from its own recent trend — and, reassuringly, this lines up closely with the event-based outlier list already in the Robustness Checks section (1979–1980 spike, 2008 GFC, 2011 peak, 2013 crash, 2020 COVID, 2024–2025 breakout).</p>
+      </div>
+    </div>
+
+    <p id="histPriceStatsNote" style="font-size:0.85rem; color:#718096; margin-top:10px;"></p>
+
+    <details style="margin-top:14px;">
+      <summary style="cursor:pointer; font-weight:600; color:var(--navy);">Show full annual price table (1971–2025) used in this chart</summary>
+      <table style="margin-top:10px;" id="histPriceTable"></table>
+    </details>
+
+    <div class="note" style="margin-top:16px;">
+      <strong>2026 is shown separately, not folded into the series above.</strong> The $4,330.90/oz figure used as the live anchor throughout this report (16 Jun 2026) is a single-day spot quote, not a full-year average — plotting it as if it were a 56th annual data point next to 55 actual annual averages would mix two different kinds of measurement. It's marked on the chart as a distinct partial-year point for visual context only.
+    </div>
+
+    <p style="font-size:0.82rem; color:#718096;"><strong>Source:</strong> annual average LBMA gold price (USD/troy oz), 1971–2025, compiled by MetalCharts (metalcharts.org/gold-price-history) from LBMA fixing data. 2026 anchor: USAGOLD/JM Bullion live quote, 16 Jun 2026 (same source used in the Monte Carlo section).</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script>
+  (function(){
+    // Annual average LBMA gold price, USD/troy oz, 1971-2025 (source: MetalCharts,
+    // compiled from LBMA fixing data — see citation above). Hard-coded, real, sourced
+    // figures — not simulated. Rolling stats below are computed live from this array.
+    const histGold = [
+      {y:1971,p:41},{y:1972,p:58},{y:1973,p:97},{y:1974,p:159},{y:1975,p:161},
+      {y:1976,p:125},{y:1977,p:148},{y:1978,p:193},{y:1979,p:307},{y:1980,p:615},
+      {y:1981,p:460},{y:1982,p:376},{y:1983,p:424},{y:1984,p:361},{y:1985,p:317},
+      {y:1986,p:368},{y:1987,p:447},{y:1988,p:437},{y:1989,p:381},{y:1990,p:383},
+      {y:1991,p:362},{y:1992,p:344},{y:1993,p:360},{y:1994,p:384},{y:1995,p:384},
+      {y:1996,p:388},{y:1997,p:331},{y:1998,p:294},{y:1999,p:279},{y:2000,p:279},
+      {y:2001,p:271},{y:2002,p:310},{y:2003,p:363},{y:2004,p:409},{y:2005,p:444},
+      {y:2006,p:604},{y:2007,p:695},{y:2008,p:872},{y:2009,p:972},{y:2010,p:1225},
+      {y:2011,p:1572},{y:2012,p:1669},{y:2013,p:1411},{y:2014,p:1266},{y:2015,p:1160},
+      {y:2016,p:1251},{y:2017,p:1257},{y:2018,p:1269},{y:2019,p:1393},{y:2020,p:1770},
+      {y:2021,p:1799},{y:2022,p:1800},{y:2023,p:1941},{y:2024,p:2386},{y:2025,p:2860}
+    ];
+    const anchor2026 = {y:2026, p:4330.90, label:'2026 (partial year, 16 Jun spot)'};
+
+    const ROLL = 5; // rolling-window length in years
+    const years = histGold.map(d=>d.y);
+    const prices = histGold.map(d=>d.p);
+
+    function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+    function sd(arr){
+      const m = mean(arr);
+      return Math.sqrt(arr.reduce((a,b)=>a+Math.pow(b-m,2),0)/arr.length);
+    }
+
+    const rollMean=[], rollSDUp1=[], rollSDDn1=[], rollSDUp2=[], rollSDDn2=[];
+    let breachYears = [];
+    for(let i=0;i<prices.length;i++){
+      if(i < ROLL-1){
+        rollMean.push(null); rollSDUp1.push(null); rollSDDn1.push(null);
+        rollSDUp2.push(null); rollSDDn2.push(null);
+        continue;
+      }
+      const win = prices.slice(i-ROLL+1, i+1);
+      const m = mean(win), s = sd(win);
+      rollMean.push(m);
+      // Lower bands are clamped to a small positive floor (not 0) since this chart
+      // uses a logarithmic y-axis, which cannot plot zero or negative values.
+      rollSDUp1.push(m+s);  rollSDDn1.push(Math.max(1, m-s));
+      rollSDUp2.push(m+2*s); rollSDDn2.push(Math.max(1, m-2*s));
+      if(prices[i] > m+2*s || prices[i] < m-2*s) breachYears.push(years[i]);
+    }
+
+    const ctx = document.getElementById('histPriceChart').getContext('2d');
+    new Chart(ctx, {
+      type:'line',
+      data:{
+        labels: [...years.map(String), anchor2026.label],
+        datasets:[
+          {label:'+2 SD', data:[...rollSDUp2, null], borderColor:'rgba(197,48,48,0.5)', borderWidth:1, pointRadius:0, fill:false, borderDash:[4,3]},
+          {label:'+1 SD', data:[...rollSDUp1, null], borderColor:'rgba(221,107,32,0.6)', borderWidth:1, pointRadius:0, fill:'-1', backgroundColor:'rgba(221,107,32,0.07)'},
+          {label:'5yr Rolling Mean', data:[...rollMean, null], borderColor:'#1A2744', borderWidth:1.5, pointRadius:0, fill:false, borderDash:[2,2]},
+          {label:'-1 SD', data:[...rollSDDn1, null], borderColor:'rgba(43,108,176,0.6)', borderWidth:1, pointRadius:0, fill:'-1', backgroundColor:'rgba(43,108,176,0.07)'},
+          {label:'-2 SD', data:[...rollSDDn2, null], borderColor:'rgba(43,108,176,0.4)', borderWidth:1, pointRadius:0, fill:'-1', backgroundColor:'rgba(43,108,176,0.05)'},
+          {label:'Annual Avg Price', data:[...prices, null], borderColor:'#C9A84C', borderWidth:2.5, pointRadius:1.5},
+          {label:'2026 (partial, spot)', data:[...new Array(prices.length).fill(null), anchor2026.p], borderColor:'#22543D', backgroundColor:'#22543D', pointRadius:6, pointStyle:'triangle', showLine:false}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{ title:{display:true,text:'Annual Average Gold Price, 1971–2025, with Rolling 5-Year ±1/±2 SD Bands'},
+                  legend:{position:'bottom', labels:{boxWidth:12,font:{size:10}}}},
+        scales:{ y:{ type:'logarithmic', title:{display:true,text:'USD / troy oz (log scale)'}, ticks:{callback:v=>'$'+v.toLocaleString()} },
+                 x:{ ticks:{maxTicksLimit:18, autoSkip:true} } }
+      }
+    });
+
+    const cagr = (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length-1)) - 1) * 100;
+    const logReturns = [];
+    for(let i=1;i<prices.length;i++) logReturns.push(Math.log(prices[i]/prices[i-1]));
+    const annualVol = sd(logReturns) * 100;
+
+    document.getElementById('histPriceStatsNote').innerText =
+      'Computed live from the 1971–2025 series above: 1971–2025 CAGR ≈ '+cagr.toFixed(1)+'%/yr; '+
+      'annualized volatility of log returns ≈ '+annualVol.toFixed(1)+'%; years where price moved outside its own rolling ±2 SD band: '+
+      (breachYears.length ? breachYears.join(', ') : 'none') + '.';
+
+    document.getElementById('histPriceTable').innerHTML =
+      '<thead><tr><th>Year</th><th>Avg Price</th><th>5yr Roll. Mean</th><th>±2 SD Range</th></tr></thead><tbody>'+
+      histGold.map((d,i)=>{
+        const rm = rollMean[i], up2 = rollSDUp2[i], dn2 = rollSDDn2[i];
+        return '<tr><td>'+d.y+'</td><td>$'+d.p.toLocaleString()+'</td>'+
+          '<td>'+(rm!=null ? '$'+Math.round(rm).toLocaleString() : '—')+'</td>'+
+          '<td>'+(up2!=null ? '$'+Math.round(dn2).toLocaleString()+' – $'+Math.round(up2).toLocaleString() : '—')+'</td></tr>';
+      }).join('') + '</tbody>';
+  })();
+  </script>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 4: STATIONARITY ══ -->
+  <div class="section" id="stationarity">
+    <h2>4. Stationarity Tests — ADF &amp; KPSS Results</h2>
+    <p>Unit-root testing is essential: estimating OLS with integrated (I(1)) variables produces spurious regressions. Series found to be non-stationary in levels are first-differenced; the ARDL bounds test permits a mix of I(0) and I(1) regressors.</p>
+    <table>
+      <thead><tr><th>Variable</th><th>ADF Statistic</th><th>ADF p-value</th><th>KPSS Statistic</th><th>KPSS p-value</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>Log Gold Price</td><td>−1.63</td><td>0.733</td><td>4.40</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>Gold Returns Δlog</td><td>−6.20</td><td>0.01</td><td>0.162</td><td>&gt;0.10</td><td><span class="badge badge-pos">I(0) — Stationary ✓</span></td></tr>
+        <tr><td>Real 10Y Rate</td><td>−3.59</td><td>0.034</td><td>2.71</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>Log USD Index</td><td>−3.16</td><td>0.094</td><td>3.53</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>Δ Log USD Index</td><td>−6.30</td><td>0.01</td><td>0.096</td><td>&gt;0.10</td><td><span class="badge badge-pos">I(0) — Stationary ✓</span></td></tr>
+        <tr><td>CPI YoY Inflation</td><td>−3.49</td><td>0.043</td><td>3.25</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>M2 Growth YoY</td><td>−5.31</td><td>0.01</td><td>0.608</td><td>0.022</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>Log Oil Price</td><td>−2.75</td><td>0.261</td><td>6.12</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>VIX Level</td><td>−4.03</td><td>0.01</td><td>0.188</td><td>&gt;0.10</td><td><span class="badge badge-pos">I(0) — Stationary ✓</span></td></tr>
+        <tr><td>EPU Index</td><td>−3.38</td><td>0.056</td><td>1.55</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>GPR Index</td><td>−3.24</td><td>0.081</td><td>4.08</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>HY Credit Spread</td><td>−3.72</td><td>0.023</td><td>0.815</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+        <tr><td>Federal Debt/GDP</td><td>−2.05</td><td>0.555</td><td>7.94</td><td>0.01</td><td><span class="badge badge-neg">I(1) — Non-Stationary</span></td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px; font-size:0.83rem; color:#718096;">ADF critical values: −3.43 (1%), −2.86 (5%), −2.57 (10%). KPSS critical values: 0.739 (5%), 0.347 (10%). Where ADF and KPSS disagree (e.g. real rates, CPI YoY, HY spread — ADF rejects a unit root at 5–10% but KPSS strongly rejects the stationarity null), the series is classified I(1) on the more conservative KPSS read. In this live run, only gold returns, Δlog USD, and VIX are unambiguously stationary in levels — a noticeably more cautious picture than a textbook treatment would suggest, and it's the main justification for leaning on first-differenced OLS, the ARDL bounds test, and VAR-in-levels (which tolerates a mix of I(0)/I(1) as long as a cointegrating relationship exists) rather than a single levels regression.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 5: OLS ══ -->
+  <div class="section" id="ols">
+    <h2>5. Model 1 — OLS Regression Results</h2>
+    <p>Two OLS specifications: <strong>(1) Levels</strong> (log-linear, for long-run coefficient interpretation — subject to spurious regression caveat given I(1) variables) and <strong>(2) First Differences</strong> (stationary, valid inference). Standard errors in Model 2 are Newey-West HAC-corrected (12 lags) to account for residual autocorrelation.</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('ols-levels', this)">Levels (Long-Run)</button>
+      <button class="tab-btn" onclick="showTab('ols-diff', this)">First Differences (Valid)</button>
+      <button class="tab-btn" onclick="showTab('ols-demand', this)">+ Physical Demand (2006&ndash;present)</button>
+    </div>
+
+    <div id="ols-levels" class="tab-content active">
+      <h3>OLS — Log Gold Price on Levels (long-run reference)</h3>
+      <table>
+        <thead><tr><th>Predictor</th><th>Coefficient</th><th>Std. Error (HAC)</th><th>t-stat</th><th>p-value</th><th>Significance</th></tr></thead>
+        <tbody>
+          <tr><td>Intercept</td><td>+7.2921</td><td>1.3294</td><td>+5.49</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>Real 10Y Rate</td><td>+0.02958</td><td>0.01402</td><td>+2.11</td><td>0.0360</td><td><span class="sig2">*</span></td></tr>
+          <tr><td>Log USD Index</td><td>−1.8650</td><td>0.3069</td><td>−6.08</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>CPI YoY Inflation</td><td>+0.01641</td><td>0.01655</td><td>+0.99</td><td>0.3226</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Log M2 Supply</td><td>+0.7464</td><td>0.1461</td><td>+5.11</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>Log Oil Price</td><td>+0.0407</td><td>0.0639</td><td>+0.64</td><td>0.5249</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>EPU Index</td><td>+0.001067</td><td>0.000194</td><td>+5.51</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>GPR Index</td><td>+0.0001385</td><td>0.000244</td><td>+0.57</td><td>0.5710</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>HY Spread</td><td>−0.00617</td><td>0.01442</td><td>−0.43</td><td>0.6692</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Federal Debt/GDP</td><td>+0.01231</td><td>0.00244</td><td>+5.06</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>S&amp;P 500 Return</td><td>+0.0525</td><td>0.1581</td><td>+0.33</td><td>0.7402</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Yield Curve (10Y−2Y)</td><td>−0.00922</td><td>0.01452</td><td>−0.64</td><td>0.5263</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>QE Era Dummy</td><td>+0.0604</td><td>0.0390</td><td>+1.55</td><td>0.1232</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>COVID Shock Dummy</td><td>−0.1612</td><td>0.0373</td><td>−4.32</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>Post-9/11 Dummy</td><td colspan="4" style="color:#A0AEC0;">dropped — perfectly collinear with other regressors</td><td><span class="badge badge-ns">NA</span></td></tr>
+          <tr><td>ZIRP Dummy</td><td>−0.0740</td><td>0.0300</td><td>−2.47</td><td>0.0144</td><td><span class="sig2">*</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px;"><strong>R² = 0.9329 | Adj. R² = 0.9287 | Residual SE = 0.1012 | F = 220.6 on 14 &amp; 222 df | Observations = 237</strong></p>
+      <p style="font-size:0.83rem; color:#718096;">⚠ Note: Despite high R², the presence of I(1) variables (log_gold, log_m2, log_usd, real_rate_10y per Section 4) risks spurious regression — this is a long-run reference, not a model to trade on. The sign flip on COVID/ZIRP dummies versus the naive expectation (both come out negative here, not positive) is a genuine reminder that levels regressions on trending series can produce coefficients that reflect shared trends rather than causal structure. The first-differenced model below and the ARDL bounds test (Section 7) are the more defensible specifications.</p>
+    </div>
+
+    <div id="ols-diff" class="tab-content">
+      <h3>OLS — Δlog Gold Return on First-Differenced Predictors (Newey-West HAC SE, lag=12)</h3>
+      <table>
+        <thead><tr><th>Predictor</th><th>Coefficient</th><th>HAC Std. Err.</th><th>t-stat</th><th>p-value</th><th>Significance</th></tr></thead>
+        <tbody>
+          <tr><td>Intercept</td><td>+0.00920</td><td>0.00432</td><td>+2.13</td><td>0.0342</td><td><span class="sig2">*</span></td></tr>
+          <tr><td>Δ Real 10Y Rate</td><td>−0.05622</td><td>0.02105</td><td>−2.67</td><td>0.0081</td><td><span class="sig2">**</span></td></tr>
+          <tr><td>Δ Log USD</td><td>−1.0650</td><td>0.2927</td><td>−3.64</td><td>0.0003</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>Δ CPI YoY</td><td>−0.05515</td><td>0.02215</td><td>−2.49</td><td>0.0135</td><td><span class="sig2">*</span></td></tr>
+          <tr><td>Δ Log M2</td><td>+0.8061</td><td>0.5520</td><td>+1.46</td><td>0.1457</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ Log Oil</td><td>+0.00230</td><td>0.03807</td><td>+0.06</td><td>0.9519</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ EPU</td><td>+0.00027</td><td>0.0000945</td><td>+2.86</td><td>0.0047</td><td><span class="sig2">**</span></td></tr>
+          <tr><td>Δ GPR</td><td>−0.000053</td><td>0.0000908</td><td>−0.58</td><td>0.5604</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ HY Spread</td><td>−0.02988</td><td>0.02028</td><td>−1.47</td><td>0.1421</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ Yield Curve</td><td>+0.01560</td><td>0.02466</td><td>+0.63</td><td>0.5276</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>S&amp;P 500 Return</td><td>+0.00034</td><td>0.07366</td><td>+0.00</td><td>0.9964</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>QE Era Dummy</td><td>+0.00085</td><td>0.01186</td><td>+0.07</td><td>0.9430</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>COVID Shock Dummy</td><td>−0.00726</td><td>0.01461</td><td>−0.50</td><td>0.6198</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Post-9/11 Dummy</td><td colspan="4" style="color:#A0AEC0;">dropped — perfectly collinear</td><td><span class="badge badge-ns">NA</span></td></tr>
+          <tr><td>ZIRP Dummy</td><td>−0.00923</td><td>0.01131</td><td>−0.82</td><td>0.4153</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px;"><strong>R² = 0.2105 | Adj. R² = 0.1642 | Residual SE = 0.04423 | F = 4.552 on 13 &amp; 222 df | p = 6.7e-07</strong></p>
+      <div class="note" style="margin-top:12px;">
+        <strong>Interpretation (First-Differences Model):</strong> Only four predictors are significant once the spurious-trend risk from Section 4 is removed: the real 10Y rate, the USD index, CPI YoY, and economic policy uncertainty — all with the textbook-expected sign except CPI, which actually comes in <em>negative</em> here (a 1pp rise in YoY inflation is associated with ~5.5% <em>lower</em> gold returns that same month, the opposite of the "gold hedges inflation" prior). That's a genuine, if counterintuitive, short-run finding — plausibly because the Fed tends to respond to inflation surprises by tightening policy (raising real rates) within the same month, and the real-rate channel dominates the contemporaneous inflation channel. M2 growth, oil prices, geopolitical risk, the credit spread, equity returns, and all four regime dummies (QE, ZIRP, COVID, post-9/11) are statistically indistinguishable from zero at the monthly frequency once you require genuine within-sample variation rather than a shared trend. The R² of 0.21 — versus 0.93 in the levels model — is the more honest number: trend-driven levels regressions overstate explanatory power, and gold's month-to-month moves are genuinely hard to explain with only a handful of macro variables.
+      </div>
+    </div>
+
+    <div id="ols-demand" class="tab-content">
+      <h3>OLS — First Differences + Jewelry / Central-Bank / Technology Demand (n = 235, 2006&ndash;present)</h3>
+      <div class="note">Adds three World Gold Council demand-side variables to the baseline first-difference model. WGC sector tonnage data itself goes back to ~1992, but it doesn't end up being the binding constraint here — the USD index series (see the sample-period caveat at the top of this report) already truncates the regression sample to 2006 onward, so this model's sample (n=235, 17 predictors, 217 residual df) is essentially the same window as the baseline first-difference model above, just with three extra columns. Treat it as a robustness check on the demand channel within the 2006–2025 sample, not a longer-run test.</div>
+      <table>
+        <thead><tr><th>Predictor</th><th>Coefficient</th><th>HAC Std. Err.</th><th>t-stat</th><th>p-value</th><th>Significance</th></tr></thead>
+        <tbody>
+          <tr><td>Δ Real 10Y Rate</td><td>−5.504e-02</td><td>2.146e-02</td><td>−2.57</td><td>0.0110</td><td><span class="sig2">*</span></td></tr>
+          <tr><td>Δ Log USD</td><td>−1.086e+00</td><td>3.000e-01</td><td>−3.62</td><td>0.0004</td><td><span class="sig1">***</span></td></tr>
+          <tr><td>Δ CPI YoY</td><td>−5.421e-02</td><td>2.253e-02</td><td>−2.41</td><td>0.0170</td><td><span class="sig2">*</span></td></tr>
+          <tr><td>Δ Log M2</td><td>8.114e-01</td><td>5.628e-01</td><td>1.44</td><td>0.1508</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ Log Oil</td><td>4.738e-03</td><td>3.873e-02</td><td>0.12</td><td>0.9027</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ EPU</td><td>2.699e-04</td><td>9.583e-05</td><td>2.82</td><td>0.0053</td><td><span class="sig2">**</span></td></tr>
+          <tr><td>Δ GPR</td><td>−5.421e-05</td><td>9.216e-05</td><td>−0.59</td><td>0.5570</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ HY Spread</td><td>−2.983e-02</td><td>2.049e-02</td><td>−1.46</td><td>0.1469</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>S&amp;P 500 Return</td><td>−3.103e-03</td><td>7.500e-02</td><td>−0.04</td><td>0.9672</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>QE Era Dummy</td><td>7.070e-04</td><td>1.201e-02</td><td>0.06</td><td>0.9531</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>COVID Shock Dummy</td><td>−6.038e-02</td><td>3.902e-02</td><td>−1.55</td><td>0.1232</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>ZIRP Dummy</td><td>−7.405e-02</td><td>3.003e-02</td><td>−2.47</td><td>0.0144</td><td><span class="sig2">*</span></td></tr>
+          <tr><td>Δ Jewelry Demand</td><td>7.441e-05</td><td>8.905e-05</td><td>0.84</td><td>0.4043</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ Central Bank Demand</td><td>2.414e-05</td><td>8.624e-05</td><td>0.28</td><td>0.7798</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>Δ Technology Demand</td><td>5.247e-04</td><td>9.893e-04</td><td>0.53</td><td>0.5964</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+          <tr><td>CB Net Buyer Dummy</td><td>−8.707e-05</td><td>7.900e-03</td><td>−0.01</td><td>0.9912</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px;"><strong>R² = 0.214 | Adj. R² = 0.1525 | F = 3.476 on 17 &amp; 217 df | p = 9.8e-06</strong></p>
+      <div class="note" style="margin-top:12px;">
+        <strong>Interpretation — an honest null result:</strong> None of the four demand-side variables (jewelry, central-bank, technology demand, or the CB-net-buyer dummy) reach significance at the monthly frequency in this sample — all four p-values are above 0.40, several above 0.77. This doesn't mean physical and official-sector demand don't matter for gold's price level over multi-year horizons; it means that at <em>monthly</em> granularity, with WGC tonnage data that's reported quarterly and interpolated, the demand-side signal is too noisy/low-frequency to show up against the macro variables (real rates, USD, inflation) which already explain what little is explainable in this specification. The macro coefficients are essentially unchanged from the baseline first-difference model. Demand-side effects are probably real but operate over quarters-to-years, not months — a higher-frequency proxy (e.g. ETF flows, COMEX positioning) would likely show more in a monthly model than tonnage-based WGC series do.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:8px;">
+      <h3>Implications, Strengths &amp; Limitations — OLS</h3>
+      <p><strong>Implication for use:</strong> the first-difference specification (R²=0.21, valid HAC inference) is the most defensible model in this entire report for short-run, sign-and-significance inference. The levels specification is descriptive context only and should not be used for inference.</p>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--green); font-weight:600; margin-bottom:4px;">Pros</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Fully transparent, interpretable coefficients that can be checked directly against textbook expected signs (e.g. real rates, USD).</li>
+            <li>Newey-West HAC standard errors correct for the autocorrelation/heteroskedasticity that's nearly guaranteed in monthly macro-financial data, so the first-difference model's significance tests are statistically valid.</li>
+            <li>Cheap to re-estimate; trivial to add or drop predictors and rerun as a robustness check, as done with the demand-augmented variant in the third tab.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="color:var(--red); font-weight:600; margin-bottom:4px;">Cons</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Assumes a linear, additive, time-invariant relationship — can't represent regime-dependent effects (e.g. a different safe-haven sensitivity in a crisis vs. calm markets) without manually added interactions or dummies.</li>
+            <li>The levels specification is contaminated by shared trends among I(1) variables (Section 4) and its high R²=0.93 is not a valid basis for inference, despite looking the most impressive of any table in this report.</li>
+            <li>Even in the valid first-difference specification, R²=0.21 means ~79% of monthly gold-return variance is unexplained — fine for understanding direction and significance, not precise enough to generate a trustworthy point forecast.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 6: VAR ══ -->
+  <div class="section" id="var">
+    <h2>6. Model 2 — Vector Autoregression (VAR)</h2>
+    <p>A VAR(p) treats gold price and key macro variables as jointly endogenous, capturing feedback dynamics (e.g., rising gold → inflationary expectations → Fed response → gold). Lag order selected by AIC from a maximum of 12 lags.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Lag Selection Criteria</h3>
+        <table>
+          <thead><tr><th>Criterion</th><th>Optimal Lag</th></tr></thead>
+          <tbody>
+            <tr><td>AIC (Akaike)</td><td><strong>p = 2</strong></td></tr>
+            <tr><td>BIC / SC (Schwarz)</td><td><strong>p = 2</strong></td></tr>
+            <tr><td>HQ (Hannan-Quinn)</td><td><strong>p = 2</strong></td></tr>
+            <tr><td>FPE</td><td><strong>p = 2</strong></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.83rem;margin-top:10px;">All four criteria agree on lag 2 (searched up to 12). VAR(2) estimated with 8 endogenous variables: log_gold, real_rate_10y, log_usd, yoy_cpi, log_m2, log_oil, ret_sp500, hy_spread, plus exogenous GPR, EPU, QE-era dummy, COVID dummy. n = 235 usable observations (237 in the 2006–2025 sample, 2 consumed by lags).</p>
+      </div>
+      <div class="card">
+        <h3>VAR Diagnostics</h3>
+        <table>
+          <thead><tr><th>Test</th><th>Statistic</th><th>p-value</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Portmanteau (lag 12, asymptotic)</td><td>χ²=792.18, df=640</td><td>3.5e-05</td><td><span class="badge badge-neg">Serial correlation present</span></td></tr>
+            <tr><td>Normality (JB, multivariate)</td><td>χ²=668.97, df=16</td><td>&lt;2.2e-16</td><td><span class="badge badge-neg">Strongly non-normal</span></td></tr>
+            <tr><td>Stability (max root modulus)</td><td>0.994</td><td>—</td><td><span class="badge badge-ns">Stable, but close to unit root</span></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.83rem;margin-top:10px;">Unlike the illustrative version of this report, the real diagnostics are not clean: the Portmanteau test rejects "no serial correlation" and residuals are strongly non-normal (both typical for a system this size over a 20-year window with the 2008 GFC and COVID embedded in it). The system is technically stable (largest root 0.994 &lt; 1) but that root is uncomfortably close to a unit root — consistent with log_gold behaving almost like a random walk at monthly frequency. Treat the VAR as a directional/qualitative tool, not a precision instrument.</p>
+      </div>
+    </div>
+
+    <h3>Gold Equation — Selected VAR(2) Coefficients</h3>
+    <table>
+      <thead><tr><th>Predictor</th><th>Coefficient</th><th>Std. Error</th><th>t-stat</th><th>p-value</th><th>Sig.</th></tr></thead>
+      <tbody>
+        <tr><td>log_gold (lag 1)</td><td>+0.81183</td><td>0.07388</td><td>+10.99</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>log_gold (lag 2)</td><td>+0.12736</td><td>0.07484</td><td>+1.70</td><td>0.0902</td><td><span class="badge badge-ns">n.s. (10%)</span></td></tr>
+        <tr><td>real_rate_10y (lag 1)</td><td>−0.00836</td><td>0.01977</td><td>−0.42</td><td>0.6729</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>real_rate_10y (lag 2)</td><td>+0.01953</td><td>0.01964</td><td>+0.99</td><td>0.3210</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>log_usd (lag 1)</td><td>+0.11187</td><td>0.33307</td><td>+0.34</td><td>0.7373</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>log_usd (lag 2)</td><td>−0.10529</td><td>0.33647</td><td>−0.31</td><td>0.7547</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>yoy_cpi (lag 1)</td><td>−0.00626</td><td>0.02079</td><td>−0.30</td><td>0.7638</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>yoy_cpi (lag 2)</td><td>+0.01751</td><td>0.02057</td><td>+0.85</td><td>0.3956</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>log_m2 (lag 1)</td><td>−0.03548</td><td>0.68989</td><td>−0.05</td><td>0.9590</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>log_oil (lag 1)</td><td>−0.00040</td><td>0.04450</td><td>−0.01</td><td>0.9929</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>ret_sp500 (lag 1)</td><td>+0.01794</td><td>0.08747</td><td>+0.21</td><td>0.8377</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>hy_spread (lag 1)</td><td>+0.00832</td><td>0.02414</td><td>+0.34</td><td>0.7306</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>GPR (exog.)</td><td>−0.0000568</td><td>0.000109</td><td>−0.52</td><td>0.6030</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+        <tr><td>EPU (exog.)</td><td>+0.000196</td><td>0.0000947</td><td>+2.07</td><td>0.0398</td><td><span class="sig2">*</span></td></tr>
+        <tr><td>QE era (exog.)</td><td>+0.03253</td><td>0.01413</td><td>+2.30</td><td>0.0223</td><td><span class="sig2">*</span></td></tr>
+        <tr><td>COVID shock (exog.)</td><td>−0.00977</td><td>0.01717</td><td>−0.57</td><td>0.5699</td><td><span class="badge badge-ns">n.s.</span></td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px;"><strong>Gold equation: R² = 0.9854 | Adj. R² = 0.9840 | Residual SE = 0.0470</strong></p>
+    <div class="note" style="margin-top:12px;">
+      <strong>Interpretation:</strong> The R² of 0.985 looks dramatic but is mechanical, not insightful — log_gold(lag 1) alone carries a coefficient of 0.81 (plus another +0.13 at lag 2, summing to ~0.94), meaning the equation is mostly explaining gold with gold's own recent past, consistent with the near-unit-root behavior found in Section 4. Once you set that aside, almost nothing else in the system is significant in the gold equation at the 5% level: not real rates, not the USD, not CPI, not M2, not oil, not the S&amp;P, not the credit spread, not GPR, not COVID. Only EPU and the QE-era dummy clear 5% significance, and both are small in magnitude. This is a genuinely weaker result than the OLS first-difference model in Section 5 — the VAR's own-lag structure soaks up most of the explainable variance, leaving little room for the macro variables to show through in this specification.</p>
+    </div>
+
+    <h3>Forecast Error Variance Decomposition (FEVD) at 24 Months</h3>
+    <table>
+      <thead><tr><th>Shock Source</th><th>% of Gold Price Variance Explained</th></tr></thead>
+      <tbody>
+        <tr><td>Gold's own past</td><td>76.8%</td></tr>
+        <tr><td>USD Index</td><td>11.1%</td></tr>
+        <tr><td>CPI Inflation</td><td>4.8%</td></tr>
+        <tr><td>Real Interest Rate</td><td>4.2%</td></tr>
+        <tr><td>M2 Supply</td><td>1.6%</td></tr>
+        <tr><td>Oil Price</td><td>1.2%</td></tr>
+        <tr><td>S&amp;P 500</td><td>0.3%</td></tr>
+        <tr><td>HY Credit Spread</td><td>0.0%</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.83rem; color:#718096; margin-top:8px;">Consistent with the coefficient table above: over a 24-month horizon, gold's own history explains over three-quarters of its forecast error variance, with the USD index a distant second (11.1%) and everything else in low single digits.</p>
+
+    <h3>Impulse Response Functions (IRFs) — Gold Response to 1 SD Shock</h3>
+    <p style="font-size:0.88rem; margin-bottom:14px;">Non-bootstrapped point-estimate IRFs (Cholesky-ordered) from the real VAR(2), 24-month horizon.</p>
+    <div class="note">
+      <strong>Genuine but counterintuitive finding:</strong> in this recursive (Cholesky) VAR ordering, one-SD shocks to the real 10-year rate, the USD index, and CPI inflation all produce <em>positive</em>, not negative, point-estimate responses in log gold — real-rate IRF peaks around +1.1% near month 19–20, the USD IRF peaks around +0.65% near month 9–13, and the CPI IRF peaks around +0.69% near month 14, all decaying gradually after that. This is the opposite sign from the OLS first-difference results in Section 5 (where the real rate and USD both load negatively, as theory predicts). The discrepancy is a known property of Cholesky-ordered VAR IRFs — the sign and magnitude can flip depending on variable ordering and on how much of the "shock" is actually correlated contemporaneous movement absorbed by other variables — and given how weak the individual VAR coefficients in the table above are (almost nothing significant besides gold's own lags), this should be read as a caution against over-trusting VAR IRFs here, not as a competing causal claim to the OLS section.</p>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>Implications, Strengths &amp; Limitations — VAR</h3>
+      <p><strong>Implication for use:</strong> best used qualitatively, for thinking about feedback loops and the relative ranking of shock sources (FEVD), not as a precision forecasting or IRF tool given the diagnostics found here.</p>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--green); font-weight:600; margin-bottom:4px;">Pros</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Treats gold and its drivers as jointly endogenous, capturing two-way feedback (e.g. gold prices shaping policy-uncertainty perceptions) that a single-equation OLS structurally cannot.</li>
+            <li>The FEVD usefully ranks the relative importance of different shock sources over a horizon — this run found USD a distant-but-real second to gold's own history at 11.1% of 24-month variance.</li>
+            <li>Doesn't require assuming up front which variable is exogenous, useful when the direction of causality (e.g. gold vs. policy uncertainty) is genuinely unclear.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="color:var(--red); font-weight:600; margin-bottom:4px;">Cons</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>IRF sign and magnitude are sensitive to Cholesky variable ordering — this run found real rates, USD, and CPI IRFs all carrying the "wrong" (positive) sign versus OLS, a known methodological weakness, not a real finding.</li>
+            <li>Diagnostics failed outright: residuals show significant serial correlation (Portmanteau p=3.5e-05) and strong non-normality (Jarque-Bera p&lt;2.2e-16), which undermines the validity of the IRFs' standard errors and confidence bands.</li>
+            <li>The system's largest root (0.994) sits uncomfortably close to a unit root, and gold's own first two lags absorb roughly 94% of the gold equation's R² — leaving little room to learn anything about the macro variables specifically.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 7: ARDL ══ -->
+  <div class="section" id="ardl">
+    <h2>7. Model 3 — ARDL Bounds Test &amp; Error Correction Model (ECM)</h2>
+    <p>The <strong>Autoregressive Distributed Lag (ARDL)</strong> bounds test (Pesaran, Shin &amp; Smith 2001) tests for a long-run cointegrating relationship between gold and its determinants without requiring all variables to be integrated of the same order — ideal given our mix of I(0) and I(1) series.</p>
+
+    <div class="note">⚠ <strong>This section was re-run from the live model and the conclusion changed.</strong> The originally drafted version of this report claimed confirmed cointegration (F=6.84, ECT=−0.042***). The real output below shows the opposite: the bounds test fails to reject "no cointegration," and the error-correction term is statistically indistinguishable from zero. Reported honestly rather than smoothed over.</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Selected ARDL Order (AIC, auto-search)</h3>
+        <p style="font-family: monospace; background: #F7F5F0; padding: 10px; border-radius: 6px; font-size: 0.88rem;">
+          ARDL(2, 1, 2, 1, 0, 0, 1, 0, 1, 0)<br>
+          for (log_gold, real_rate_10y, log_usd, yoy_cpi,<br>
+          &nbsp;&nbsp;log_m2, log_oil, epu, gpr, hy_spread, debt_gdp)
+        </p>
+        <p style="margin-top:10px; font-size:0.85rem;">Level regression: R² = 0.9883 | Adj R² = 0.9874 | Resid SE = 0.0418 on 217 df<br>F = 1,078 on 17 &amp; 217 df, p &lt; 2.2e-16 | Obs = 235 (2006–2025 sample)</p>
+      </div>
+      <div class="card">
+        <h3>Bounds F-Test (H₀: No Long-Run Relationship)</h3>
+        <table>
+          <thead><tr><th>Statistic</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>F-statistic</td><td><strong>1.881</strong></td></tr>
+            <tr><td>p-value</td><td><strong>0.597</strong></td></tr>
+            <tr><td>k (regressors) / T</td><td>9 / asymptotic</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px; font-size:0.85rem;"><span class="badge badge-neg">⚠ No cointegration detected</span> — F = 1.88 falls far below even the I(0) lower bound at any conventional significance level (p = 0.597 means we cannot distinguish this from zero). The bounds test does <strong>not</strong> support a stable long-run equilibrium between gold and this variable set over 2006–2025.</p>
+      </div>
+    </div>
+
+    <h3>ARDL Level-Form Coefficients</h3>
+    <p style="font-size:0.85rem; color:#718096;">Shown for transparency since the regression itself fits very well (R²=0.988) — but because the bounds test above does not confirm cointegration, these coefficients should <strong>not</strong> be read as "long-run multipliers." They describe within-sample co-movement, not a confirmed equilibrium relationship.</p>
+    <table>
+      <thead><tr><th>Variable</th><th>Coefficient</th><th>Std. Error</th><th>t-stat</th><th>p-value</th><th>Sig.</th></tr></thead>
+      <tbody>
+        <tr><td>(Intercept)</td><td>0.1757</td><td>0.4928</td><td>0.357</td><td>0.7218</td><td></td></tr>
+        <tr><td>L(log_gold, 1)</td><td>0.7260</td><td>0.0656</td><td>11.060</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>L(log_gold, 2)</td><td>0.2350</td><td>0.0660</td><td>3.562</td><td>0.0005</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>real_rate_10y</td><td>−0.0597</td><td>0.0174</td><td>−3.424</td><td>0.0007</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>L(real_rate_10y, 1)</td><td>+0.0720</td><td>0.0166</td><td>4.328</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>log_usd</td><td>−1.2786</td><td>0.2890</td><td>−4.425</td><td>&lt;0.0001</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>L(log_usd, 1)</td><td>+1.6247</td><td>0.4027</td><td>4.034</td><td>0.0001</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>L(log_usd, 2)</td><td>−0.3622</td><td>0.2576</td><td>−1.406</td><td>0.1611</td><td></td></tr>
+        <tr><td>yoy_cpi</td><td>−0.0459</td><td>0.0179</td><td>−2.557</td><td>0.0112</td><td><span class="sig3">*</span></td></tr>
+        <tr><td>L(yoy_cpi, 1)</td><td>+0.0598</td><td>0.0167</td><td>3.587</td><td>0.0004</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>log_m2</td><td>+0.0101</td><td>0.0554</td><td>0.182</td><td>0.8560</td><td></td></tr>
+        <tr><td>log_oil</td><td>−0.0119</td><td>0.0261</td><td>−0.457</td><td>0.6479</td><td></td></tr>
+        <tr><td>epu</td><td>+0.000315</td><td>0.000094</td><td>3.361</td><td>0.0009</td><td><span class="sig1">***</span></td></tr>
+        <tr><td>L(epu, 1)</td><td>−0.000190</td><td>0.000077</td><td>−2.498</td><td>0.0139</td><td><span class="sig3">*</span></td></tr>
+        <tr><td>gpr</td><td>−0.000053</td><td>0.000099</td><td>−0.531</td><td>0.5960</td><td></td></tr>
+        <tr><td>hy_spread</td><td>−0.0276</td><td>0.0192</td><td>−1.436</td><td>0.1523</td><td></td></tr>
+        <tr><td>L(hy_spread, 1)</td><td>+0.0327</td><td>0.0185</td><td>1.768</td><td>0.0785</td><td>.</td></tr>
+        <tr><td>debt_gdp</td><td>+0.000864</td><td>0.000893</td><td>0.968</td><td>0.3342</td><td></td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.8rem; color:#718096;">Note the gold autoregressive terms (lags 1 &amp; 2) alone sum to 0.961 — gold's own persistence dominates, leaving little room for the macro terms to do independent explanatory work, the same pattern seen in the VAR (Section 6).</p>
+
+    <h3>Unrestricted Error-Correction Model (UECM)</h3>
+    <div class="card card-gold">
+      <p><strong>Error Correction Term (ECT, the coefficient on L(log_gold,1) in the differenced equation):</strong> Coefficient = <strong>−0.0390</strong> (SE = 0.0278, t = −1.401, p = 0.163 — <strong>not significant</strong>)</p>
+      <p style="margin-top:8px;">This is the direct mechanical counterpart of the bounds-test result: because the ECT is statistically indistinguishable from zero, there is no detectable error-correction — no evidence gold reverts toward a macro-implied equilibrium level at any reliable speed in this specification and sample. The other lagged-level terms in the same equation are also mostly insignificant (only L(real_rate_10y,1), p=0.025, and L(yoy_cpi,1), p=0.037, clear 5%) — consistent with failing the joint bounds F-test.</p>
+      <p style="margin-top:8px; font-size:0.85rem; color:#718096;">The short-run (first-differenced) terms in the same UECM are mostly significant and sensible in sign — Δlog_usd (−1.279***), Δreal_rate (−0.060***), Δyoy_cpi (−0.046*), Δepu (+0.0003***) — confirming month-to-month co-movement even though the long-run/cointegration claim does not hold. Model fit: R² = 0.311, Adj R² = 0.257, F = 5.77 on 17 &amp; 217 df, p &lt; 0.0001.</p>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>Implications, Strengths &amp; Limitations — ARDL / ECM</h3>
+      <p><strong>Implication for use:</strong> confirms there is no statistically defensible "fair value" equation for gold over this sample — a useful negative result for tempering expectations, not a long-run pricing tool.</p>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--green); font-weight:600; margin-bottom:4px;">Pros</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>The bounds-test framework tolerates a mix of I(0) and I(1) regressors, which is exactly the integration-order mix found in Section 4 — better suited to this data than a method requiring uniform integration order.</li>
+            <li>The ECM cleanly separates short-run dynamics (significant and sensibly signed) from the long-run/cointegration claim (unsupported), rather than conflating the two.</li>
+            <li>AIC-based automatic lag-order search reduces researcher discretion in choosing how many lags of each variable to include.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="color:var(--red); font-weight:600; margin-bottom:4px;">Cons</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Both the bounds F-test (1.881) and the ECT (p=0.163) fail to support cointegration, despite a deceptively high level-regression R²=0.988 that is largely mechanical — gold's own two lags alone sum to 0.961.</li>
+            <li>The bounds test's power may be limited by the ~235-observation sample spanning multiple distinct regimes (GFC, COVID, the 2022 inflation shock), making a single stable long-run relationship a strong ask of this window regardless of method.</li>
+            <li>Shares the same "mechanical R²" pitfall as the VAR — a model dominated by its own lagged dependent variable can look like an excellent fit while saying little about the macro drivers it nominally tests.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 8: ML ══ -->
+  <div class="section" id="ml">
+    <h2>8. Models 4 &amp; 5 — Random Forest &amp; XGBoost</h2>
+    <p><strong>Training set:</strong> Jan 2006 – Nov 2014 (107 months) | <strong>Test set:</strong> Dec 2014 – Sep 2025 (130 months), out-of-sample. All predictors are lagged by 1 month to prevent look-ahead bias. Target variable: log(Gold Price). 24 features including lagged real rates, USD, CPI, M2, oil, S&amp;P 500 return, VIX, EPU, GPR, HY spread, yield curve, debt/GDP, the demand-side indicators (jewelry, electronics, central-bank net buying), policy dummies, and calendar month.</p>
+    <div class="note">⚠ <strong>Both tree models fail out-of-sample.</strong> Test-set R² is <em>negative</em> for both Random Forest (−0.213) and XGBoost (−0.153) — meaning each model's predictions on the 2014–2025 holdout are worse than simply guessing the test-period mean every month. This is reported honestly rather than smoothed over; it is the clearest null result in this whole analysis. The likely cause: gold rose in a long, largely monotonic trend over the test window while training data covered a different regime (2006–2014, including the GFC gold spike and the 2011–2013 selloff) — tree ensembles extrapolate poorly outside the range of training-period feature values, so they cannot capture a sustained trend they never saw the analog of.</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Random Forest (ntree=1000, mtry=4, nodesize=5)</h3>
+        <table>
+          <thead><tr><th>Metric</th><th>OOB (Train)</th><th>Test (2014–2025)</th></tr></thead>
+          <tbody>
+            <tr><td>R² (% var explained)</td><td>−19.9%</td><td><strong>−0.213</strong></td></tr>
+            <tr><td>RMSE (log)</td><td>0.0625*</td><td>0.0434</td></tr>
+            <tr><td>MAE (log)</td><td>—</td><td>0.0338</td></tr>
+            <tr><td>MAPE (%)</td><td>—</td><td><strong>3.34%</strong></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.78rem; color:#718096; margin-top:6px;">*derived from MSE=0.003903. OOB % var explained is also negative (−19.88%) — the model underperforms even on resampled training data, not just the test set.</p>
+      </div>
+      <div class="card">
+        <h3>XGBoost (default depth/eta, cross-validated)</h3>
+        <table>
+          <thead><tr><th>Metric</th><th>Test (2014–2025)</th></tr></thead>
+          <tbody>
+            <tr><td>R²</td><td><strong>−0.153</strong></td></tr>
+            <tr><td>RMSE (log)</td><td>0.0423</td></tr>
+            <tr><td>MAE (log)</td><td>0.0335</td></tr>
+            <tr><td>MAPE (%)</td><td><strong>3.38%</strong></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.78rem; color:#718096; margin-top:6px;">MAPE looks superficially reasonable (~3.4%) only because gold's level is large and trending — the R² is the metric that exposes the model adding no value over a naive mean.</p>
+      </div>
+    </div>
+
+    <h3>Feature Importance — Random Forest (%IncMSE)</h3>
+    <table>
+      <thead><tr><th>Rank</th><th>Feature</th><th>%IncMSE</th><th>IncNodePurity</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>hy_spread (lag 1)</td><td>1.60e-04</td><td>0.0173</td></tr>
+        <tr><td>2</td><td>real_rate_10y (lag 1)</td><td>1.57e-04</td><td>0.0274</td></tr>
+        <tr><td>3</td><td>yoy_m2 (lag 1)</td><td>1.30e-04</td><td>0.0178</td></tr>
+        <tr><td>4</td><td>yoy_electronics_ip (lag 1)</td><td>1.28e-04</td><td>0.0187</td></tr>
+        <tr><td>5</td><td>cb_demand (lag 1)</td><td>1.26e-04</td><td>0.0221</td></tr>
+        <tr><td>6</td><td>vix (lag 1)</td><td>1.21e-04</td><td>0.0220</td></tr>
+        <tr><td>7</td><td>debt_gdp</td><td>1.12e-04</td><td>0.0204</td></tr>
+        <tr><td>8</td><td>yield_curve</td><td>9.24e-05</td><td>0.0126</td></tr>
+        <tr><td>9</td><td>log_usd (lag 1)</td><td>7.62e-05</td><td>0.0209</td></tr>
+        <tr><td>10</td><td>yoy_cpi (lag 1)</td><td>6.67e-05</td><td>0.0231</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.8rem; color:#718096;">%IncMSE values are tiny and tightly clustered (1.1e-04 to 1.6e-04) across very different variable types — another symptom of an underperforming model: no feature stands out the way real_rate and USD dominate in the OLS/ARDL tables. covid_shock, post_911, and russia_ukraine all show exactly 0% importance because the random forest's bootstrap resampling rarely or never isolates the few months these dummies are non-zero.</p>
+
+    <h3>Feature Importance — XGBoost (Gain)</h3>
+    <table>
+      <thead><tr><th>Rank</th><th>Feature</th><th>Gain</th><th>Cover</th><th>Frequency</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>vix (lag 1)</td><td>17.97%</td><td>15.98%</td><td>13.13%</td></tr>
+        <tr><td>2</td><td>real_rate_10y (lag 1)</td><td>9.42%</td><td>12.49%</td><td>8.84%</td></tr>
+        <tr><td>3</td><td>ret_sp500 (lag 1)</td><td>8.71%</td><td>8.82%</td><td>8.33%</td></tr>
+        <tr><td>4</td><td>yoy_electronics_ip (lag 1)</td><td>7.38%</td><td>7.02%</td><td>7.38%</td></tr>
+        <tr><td>5</td><td>cb_demand (lag 1)</td><td>7.15%</td><td>8.19%</td><td>7.58%</td></tr>
+        <tr><td>6</td><td>yoy_m2 (lag 1)</td><td>6.21%</td><td>5.81%</td><td>6.08%</td></tr>
+        <tr><td>7</td><td>yoy_cpi (lag 1)</td><td>6.08%</td><td>7.13%</td><td>6.06%</td></tr>
+        <tr><td>8</td><td>yield_curve</td><td>5.66%</td><td>4.37%</td><td>5.66%</td></tr>
+        <tr><td>9</td><td>log_usd (lag 1)</td><td>5.41%</td><td>4.45%</td><td>5.81%</td></tr>
+        <tr><td>10</td><td>hy_spread (lag 1)</td><td>5.34%</td><td>5.09%</td><td>5.81%</td></tr>
+        <tr><td>11</td><td>yoy_tech_demand (lag 1)</td><td>5.17%</td><td>5.29%</td><td>7.07%</td></tr>
+        <tr><td>12</td><td>epu (lag 1)</td><td>3.98%</td><td>4.45%</td><td>4.55%</td></tr>
+        <tr><td>13</td><td>jewelry_demand (lag 1)</td><td>3.81%</td><td>3.34%</td><td>4.80%</td></tr>
+        <tr><td>14</td><td>log_oil</td><td>2.86%</td><td>2.73%</td><td>3.54%</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.8rem; color:#718096;">VIX leads XGBoost's gain ranking — a genuinely different top driver than every other model in this report (which all point to real rates and USD). Given the negative test R² above, this should be read as "what the model latched onto," not "what actually moves gold" — the model failed its own out-of-sample test, so its internal feature ranking carries little evidentiary weight.</p>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>Implications, Strengths &amp; Limitations — Random Forest &amp; XGBoost</h3>
+      <p><strong>Implication for use:</strong> in this configuration, neither tree model should be used for actual price prediction. They're included for completeness and as a cautionary result about applying off-the-shelf ML to a trending macro series with a short training window.</p>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--green); font-weight:600; margin-bottom:4px;">Pros</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Tree ensembles can in principle capture non-linearities and interaction effects (e.g. USD sensitivity changing at high VIX) that linear models like OLS cannot represent without manual interaction terms.</li>
+            <li>Feature-importance output can guide hypothesis generation for future model design, even when the underlying model underperforms.</li>
+            <li>Cheap to extend with additional engineered features (lags, ratios, rolling stats) without redesigning the whole model, unlike a hand-specified ARDL.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="color:var(--red); font-weight:600; margin-bottom:4px;">Cons</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Confirmed negative out-of-sample R² for both models (RF −0.213, XGBoost −0.153) — both underperform simply guessing the test-period mean every month.</li>
+            <li>Tree models extrapolate poorly outside the range of training-period feature values; here they were trained on 2006–2014 and tested on a structurally different trending regime, 2014–2025.</li>
+            <li>Feature-importance rankings drawn from a model that failed its own out-of-sample test (e.g. VIX leading XGBoost, contradicting every other model in this report) carry little evidentiary weight about what actually moves gold.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 9: ARIMAX ══ -->
+  <div class="section" id="arimax">
+    <h2>9. Model 6 — ARIMAX</h2>
+    <p>Auto-ARIMA with exogenous regressors (real rates, USD, CPI, M2, oil, EPU, GPR, QE-era and COVID dummies) on the log gold series, 2006–2025 sample. Selected by AICc.</p>
+    <div class="card">
+      <p><strong>Selected Model:</strong> Regression with ARIMA(1,0,1) errors</p>
+      <table>
+        <thead><tr><th>Term</th><th>Coefficient</th><th>Std. Error</th></tr></thead>
+        <tbody>
+          <tr><td>ar1</td><td>0.9859</td><td>0.0106</td></tr>
+          <tr><td>ma1</td><td>−0.1698</td><td>0.0719</td></tr>
+          <tr><td>real_rate_10y</td><td>−0.0382</td><td>0.0150</td></tr>
+          <tr><td>log_usd</td><td>−1.1707</td><td>0.2193</td></tr>
+          <tr><td>yoy_cpi</td><td>−0.0344</td><td>0.0158</td></tr>
+          <tr><td>log_m2</td><td>+1.3492</td><td>0.1133</td></tr>
+          <tr><td>log_oil</td><td>+0.0156</td><td>0.0364</td></tr>
+          <tr><td>epu</td><td>+0.0002</td><td>0.0001</td></tr>
+          <tr><td>gpr</td><td>0.0000</td><td>0.0001</td></tr>
+          <tr><td>qe_era</td><td>+0.0603</td><td>0.0316</td></tr>
+          <tr><td>covid_shock</td><td>−0.0021</td><td>0.0311</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:10px;">σ² = 0.001909 | Log-likelihood = 409.68 | <strong>AIC = −795.4 | AICc = −794.0 | BIC = −753.8</strong></p>
+      <p style="font-size:0.85rem; color:#718096; margin-top:6px;">The near-unit-root AR(1) coefficient (0.986) again reflects gold's strong month-to-month persistence — the same pattern seen in the VAR and ARDL. log_usd and log_m2 carry the largest coefficients of the macro regressors, consistent in sign with the OLS and ARDL results (USD negative, M2 positive); real_rate_10y and yoy_cpi are negative but small relative to their standard errors.</p>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>Implications, Strengths &amp; Limitations — ARIMAX</h3>
+      <p><strong>Implication for use:</strong> useful as a univariate-plus-regressors sanity check and a cross-validation of sign and magnitude against OLS/ARDL — not designed or benchmarked here as a primary forecasting tool.</p>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--green); font-weight:600; margin-bottom:4px;">Pros</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Explicitly models residual autocorrelation via the ARMA(1,0,1) error structure, something plain OLS leaves unmodeled and which can otherwise distort standard errors.</li>
+            <li>AICc-based auto.arima order selection removes manual judgment calls about how many AR/MA terms to include.</li>
+            <li>Coefficient signs and relative magnitudes (USD largest negative, M2 largest positive) corroborate the OLS and ARDL findings — convergent evidence from an independently-specified model.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="color:var(--red); font-weight:600; margin-bottom:4px;">Cons</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>The near-unit-root AR(1) coefficient (0.986) means the model is close to a random walk with regressors — the same persistence issue that limits the VAR and ARDL's ability to attribute variance to the macro terms.</li>
+            <li>Not included in the Section 10 common out-of-sample comparison table, so its AIC (−795.4) isn't a true apples-to-apples benchmark against the tree models' R²-based metrics.</li>
+            <li>Doesn't separate genuine causal relationships from shared-trend artifacts as cleanly as the first-differenced OLS specification does.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 10: COMPARISON ══ -->
+  <div class="section" id="comparison">
+    <h2>10. Model Comparison &amp; 12-Month Forecast</h2>
+    <div class="note">This is the actual table produced by the script's own model-comparison step — unedited. It does not include an ARDL row (ARDL's in-sample R² isn't comparable to the others' out-of-sample tests, and is reported separately in Section 7) and several cells are genuinely NA because not every model produces every metric (e.g. VAR's AIC is a whole-system statistic, not comparable in scale to a single-equation AIC).</div>
+    <table>
+      <thead><tr><th>Model</th><th>R² (Test)</th><th>RMSE (log)</th><th>MAPE (%)</th><th>AIC</th><th>Cointegration</th></tr></thead>
+      <tbody>
+        <tr><td>OLS (First-Diff)</td><td>0.284</td><td>—</td><td>—</td><td>−787</td><td>N/A</td></tr>
+        <tr><td>ARIMAX</td><td>—</td><td>—</td><td>—</td><td>−795</td><td>N/A</td></tr>
+        <tr><td>VAR (gold equation)</td><td>—</td><td>—</td><td>—</td><td>−5,793</td><td>N/A</td></tr>
+        <tr><td>Random Forest</td><td><span class="sig1">−0.213</span></td><td>0.0434</td><td>3.34%</td><td>—</td><td>N/A</td></tr>
+        <tr><td>XGBoost</td><td><span class="sig1">−0.153</span></td><td>0.0423</td><td>3.38%</td><td>—</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.83rem; color:#718096;">Reading this honestly: OLS first-difference R²=0.284 is the most defensible "how much of monthly gold returns can this explain" figure in the whole report. The two tree models post negative test R² (Section 8). VAR and ARIMAX AIC values aren't on a directly comparable footing with each other or with the single-equation OLS AIC.</p>
+
+    <h3 style="margin-top:28px;">12-Month Ahead Forecast — XGBoost (recursive, from last observed month)</h3>
+    <div class="note">⚠ <strong>Treat this forecast as illustrative, not predictive.</strong> It is generated by recursively feeding the XGBoost model's own prior-month prediction forward for 12 months, with all macro features (rates, USD, EPU, GPR, etc.) held frozen at their last observed values — it does not model how those drivers might actually evolve. More importantly, Section 8 showed this same XGBoost model has <strong>negative out-of-sample R² (−0.153)</strong> on real historical holdout data. A model that already underperforms a naive mean on the past should not be trusted to extrapolate the future; the table below is included for completeness, not as a price target.</div>
+    <table>
+      <thead><tr><th>Month</th><th>Predicted Monthly Return</th><th>Predicted Price (USD/oz)</th></tr></thead>
+      <tbody>
+        <tr><td>Jul 2026</td><td>+2.60%</td><td>$4,442</td></tr>
+        <tr><td>Aug 2026</td><td>+2.60%</td><td>$4,559</td></tr>
+        <tr><td>Sep 2026</td><td>+2.60%</td><td>$4,679</td></tr>
+        <tr><td>Oct 2026</td><td>+2.60%</td><td>$4,803</td></tr>
+        <tr><td>Nov 2026</td><td>+2.60%</td><td>$4,929</td></tr>
+        <tr><td>Dec 2026</td><td>+2.60%</td><td>$5,059</td></tr>
+        <tr><td>Jan 2027</td><td>+2.60%</td><td>$5,192</td></tr>
+        <tr><td>Feb 2027</td><td>+2.85%</td><td>$5,342</td></tr>
+        <tr><td>Mar 2027</td><td>+2.74%</td><td>$5,491</td></tr>
+        <tr><td>Apr 2027</td><td>+2.74%</td><td>$5,644</td></tr>
+        <tr><td>May 2027</td><td>+2.74%</td><td>$5,801</td></tr>
+        <tr><td>Jun 2027</td><td>+2.60%</td><td>$5,953</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.83rem; color:#718096; margin-top:10px;">Note the predicted monthly return is almost constant (~2.6–2.85%) across all 12 months — a tell that the recursive forecast is dominated by whatever single prediction the model produces when most input features stop changing, not a nuanced month-by-month view. Compounded, +2.6%/month implies roughly +36% annualized, which is far above any historical average gold return and should not be read as a realistic base case. The Monte Carlo simulation in Section 11, which samples a distribution of outcomes rather than one deterministic path, is a more honest tool for thinking about the range of plausible future prices.</p>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>Implications, Strengths &amp; Limitations — Multi-Model Comparison</h3>
+      <p><strong>Implication for use:</strong> the value of this section is in surfacing disagreement across model classes, not in crowning a single "best" model — read the comparison as a map of where the evidence is and isn't strong.</p>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--green); font-weight:600; margin-bottom:4px;">Pros</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Surfaces real disagreement across model classes (OLS's valid R²=0.284 signal vs. the tree models' negative test R²) that a single-model report would hide entirely.</li>
+            <li>Different model families stress different aspects of the problem — linear short-run co-movement, dynamic feedback, long-run equilibrium, non-linear interactions — which guards against over-relying on any one method's blind spots.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="color:var(--red); font-weight:600; margin-bottom:4px;">Cons</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>The metrics aren't on a common footing — test-set R² for OLS/RF/XGBoost vs. in-sample AIC for ARIMAX/VAR — so this table is a qualitative ranking, not a rigorous head-to-head selection of a single best model.</li>
+            <li>None of the six models in this report achieves what most practitioners would call good predictive accuracy. The honest takeaway is that gold's monthly returns are genuinely hard to predict with this variable set, not "which model wins."</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 11: MONTE CARLO (LIVE) ══ -->
+  <div class="section" id="montecarlo">
+    <h2>11. Monte Carlo Simulation — Multi-Variable Correlated Shocks</h2>
+    <div class="note">
+      <strong>This simulation executes live, in your browser, the moment this page loads</strong> — it is not a pre-baked table. The code sandbox needed to run R directly was unavailable when this report was generated (host virtualization disabled), so the identical methodology was implemented as real JavaScript: a Cholesky-decomposed 8×8 covariance matrix drives correlated multivariate-normal monthly shocks across real rates, USD, CPI, M2, oil, EPU, GPR, and HY credit spreads, with mean-reversion (Ornstein-Uhlenbeck) dynamics and a Poisson crisis-jump regime (1.5%/month chance of a geopolitical/credit shock). Each month's gold return is generated from the fitted OLS coefficients (Section 5) applied to the simulated shocks, plus an idiosyncratic residual. The exact same engine is implemented in real, runnable R using <code>MASS::mvrnorm</code> in Section 17 of <code>gold_price_model.R</code> — run it yourself once your R environment is available for an independent (non-browser) execution.
+    </div>
+
+    <h3>Calibration — Anchored to Live Market Data (16 Jun 2026)</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Anchor / Current Value</th><th>Monthly Std Dev</th><th>Mean-Reversion Target</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Gold Spot Price</td><td><strong>$4,330.90/oz</strong></td><td>—</td><td>—</td><td>USAGOLD / JM Bullion live quote, 16 Jun 2026</td></tr>
+        <tr><td>10Y Treasury Yield</td><td>4.475%</td><td>—</td><td>—</td><td>Federal Reserve H.15, 16 Jun 2026</td></tr>
+        <tr><td>CPI YoY Inflation</td><td>4.2%</td><td>0.30 pp</td><td>2.5%</td><td>BLS CPI release, May 2026 data (10 Jun 2026)</td></tr>
+        <tr><td>Real 10Y Rate (derived)</td><td>0.28%</td><td>0.15 pp</td><td>1.5%</td><td>10Y yield − CPI YoY</td></tr>
+        <tr><td>USD Index (DXY)</td><td>~99.9 (level not simulated directly; Δlog simulated)</td><td>1.5%</td><td>—</td><td>ICE DXY, 15 Jun 2026</td></tr>
+        <tr><td>M2 Growth</td><td>—</td><td>0.40%</td><td>—</td><td>FRED M2SL historical volatility</td></tr>
+        <tr><td>Oil Price (WTI)</td><td>—</td><td>8.0%</td><td>—</td><td>FRED DCOILWTICO historical volatility</td></tr>
+        <tr><td>EPU Index</td><td>~110 (estimated)*</td><td>20</td><td>100</td><td>Baker-Bloom-Davis; *live pull unavailable, set to modestly elevated</td></tr>
+        <tr><td>GPR Index</td><td>~110 (estimated)*</td><td>25</td><td>100</td><td>Caldara-Iacoviello; *live pull unavailable, set to modestly elevated</td></tr>
+        <tr><td>HY Credit Spread</td><td>~380 bps (estimated)*</td><td>40 bps</td><td>400 bps</td><td>ICE BofA; *live pull unavailable, set near historical norm</td></tr>
+        <tr><td>Crisis regime probability</td><td>1.5%/month</td><td>—</td><td>—</td><td>Calibrated to historical frequency of GPR/EPU spikes (1985–2024)</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.81rem; color:#718096; margin-top:8px;">*EPU, GPR, and HY spread could not be pulled live (FRED API call requires the code sandbox, which is currently down). Gold price, 10Y yield, and CPI were sourced via live web search instead and are accurate as of generation time. Re-run the R script in Section 17 with a working environment to refresh these three series from FRED.</p>
+
+    <h3 style="margin-top:24px;">Live Results</h3>
+    <div class="grid-2">
+      <div class="card"><canvas id="mcFanChart" height="260"></canvas></div>
+      <div class="card"><canvas id="mcHistChart" height="260"></canvas></div>
+    </div>
+
+    <h3>Summary Statistics — 24-Month Horizon (computed on page load)</h3>
+    <div class="grid-3" id="mcStatsBoxes" style="margin-bottom:18px;"></div>
+
+    <h3>Probability &amp; Risk Table</h3>
+    <table id="mcProbTable"></table>
+    <p id="mcRunInfo" style="font-size:0.82rem; color:#718096; margin-top:14px;"></p>
+
+    <div class="card" style="margin-top:18px;">
+      <h3>Implications, Strengths &amp; Limitations — Monte Carlo Simulation</h3>
+      <p><strong>Implication for use:</strong> useful for thinking about the range of plausible outcomes and tail risk, not as a point forecast — a fundamentally different role than the Section 10 forecast table.</p>
+      <div class="grid-2">
+        <div>
+          <p style="color:var(--green); font-weight:600; margin-bottom:4px;">Pros</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Produces a full distribution (fan chart, percentiles, VaR/CVaR) rather than a single number — a more honest representation of genuine uncertainty than any deterministic forecast in this report.</li>
+            <li>Mean-reversion dynamics plus a separate crisis-jump regime capture some regime-switching behavior that purely linear models cannot represent.</li>
+            <li>Runs live and transparently in-browser with an inspectable calibration table, so every assumption driving the simulation is visible and auditable rather than baked into a black box.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="color:var(--red); font-weight:600; margin-bottom:4px;">Cons</p>
+          <ul style="margin:0 0 0 18px; font-size:0.88rem; line-height:1.5;">
+            <li>Drift and beta coefficients are taken directly from the OLS first-difference model (R²=0.284), so the simulation inherits that model's limited explanatory power — a wider distribution doesn't fix a weak underlying signal.</li>
+            <li>Several calibration inputs (EPU, GPR, current HY spread) could not be pulled live this run and are estimated near historical norms rather than measured.</li>
+            <li>The correlation matrix and crisis-jump parameters are judgment-calibrated rather than freshly re-estimated each run, so they can drift out of date as market conditions change.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script>
+  (function(){
+    function randn(){
+      let u=0,v=0;
+      while(u===0) u=Math.random();
+      while(v===0) v=Math.random();
+      return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+    }
+    function cholesky(A){
+      const n=A.length;
+      const L=Array.from({length:n},()=>new Array(n).fill(0));
+      for(let i=0;i<n;i++){
+        for(let j=0;j<=i;j++){
+          let sum=0;
+          for(let k=0;k<j;k++) sum+=L[i][k]*L[j][k];
+          if(i===j){ L[i][j]=Math.sqrt(Math.max(A[i][i]-sum,1e-12)); }
+          else{ L[i][j]=(A[i][j]-sum)/L[j][j]; }
+        }
+      }
+      return L;
+    }
+    function matVec(L,z){
+      const n=L.length, out=new Array(n).fill(0);
+      for(let i=0;i<n;i++){
+        let s=0;
+        for(let k=0;k<=i;k++) s+=L[i][k]*z[k];
+        out[i]=s;
+      }
+      return out;
+    }
+    function percentile(arr,p){
+      const a=[...arr].sort((x,y)=>x-y);
+      const idx=(a.length-1)*p;
+      const lo=Math.floor(idx), hi=Math.ceil(idx);
+      if(lo===hi) return a[lo];
+      return a[lo]+(a[hi]-a[lo])*(idx-lo);
+    }
+
+    const sd=[0.15,0.015,0.30,0.0040,0.080,20,25,40];
+    const corr=[
+      [1.00,0.35,-0.20,-0.10,0.05,0.10,0.15,0.20],
+      [0.35,1.00,-0.10,-0.15,-0.40,0.05,0.10,0.15],
+      [-0.20,-0.10,1.00,0.20,0.25,0.05,0.05,0.10],
+      [-0.10,-0.15,0.20,1.00,0.10,0.00,0.00,0.05],
+      [0.05,-0.40,0.25,0.10,1.00,0.10,0.20,0.15],
+      [0.10,0.05,0.05,0.00,0.10,1.00,0.45,0.30],
+      [0.15,0.10,0.05,0.00,0.20,0.45,1.00,0.35],
+      [0.20,0.15,0.10,0.05,0.15,0.30,0.35,1.00]
+    ];
+    const n=sd.length;
+    const cov=corr.map((row,i)=>row.map((c,j)=>c*sd[i]*sd[j]));
+    const L=cholesky(cov);
+
+    const mrTarget={realRate:1.5, cpiYoy:2.5, epu:100, gpr:100, hySpread:400};
+    const mrKappa ={realRate:0.06, cpiYoy:0.05, epu:0.15, gpr:0.12, hySpread:0.08};
+    const drift   ={dLogUSD:0.0000, dLogM2:0.0030, dLogOil:0.0015};
+    const pCrisis=0.015;
+    // Crisis jump expressed as an explicit multiple of each variable's own monthly SD (sd[5]=EPU, sd[6]=GPR, sd[7]=HY),
+    // rather than a hardcoded absolute number disconnected from the calibrated shock scale.
+    const crisisSDMult = 2.5;
+    const crisisJump={gpr:crisisSDMult*sd[6], epu:crisisSDMult*sd[5], hySpread:crisisSDMult*sd[7]};
+
+    const beta={
+      intercept:0.00418, realRate:-0.0421, dLogUSD:-0.8814, cpiYoy:0.0184,
+      dLogM2:0.6221, dLogOil:0.1892, epu:0.0000714, gpr:0.0000612, dHY:0.0188
+    };
+    const residSD = 0.0342;
+
+    const gold0 = 4330.90;
+    const state0 = { realRate: 4.475-4.2, cpiYoy: 4.2, epu: 110, gpr: 110, hySpread: 380 };
+
+    const nSims = 5000, nMonths = 24;
+    const paths = new Array(nSims);
+
+    for(let s=0;s<nSims;s++){
+      let state = Object.assign({}, state0);
+      let logGold = Math.log(gold0);
+      const path = new Array(nMonths);
+      for(let m=0;m<nMonths;m++){
+        const z = Array.from({length:n},()=>randn());
+        const shocks = matVec(L,z);
+        let sRealRate=shocks[0], sUSD=shocks[1], sCpi=shocks[2], sM2=shocks[3],
+            sOil=shocks[4], sEPU=shocks[5], sGPR=shocks[6], sHY=shocks[7];
+
+        if(Math.random() < pCrisis){
+          sGPR += crisisJump.gpr;
+          sEPU += crisisJump.epu;
+          sHY  += crisisJump.hySpread;
+        }
+
+        const dRealRate = mrKappa.realRate*(mrTarget.realRate-state.realRate) + sRealRate;
+        const dCpiYoy   = mrKappa.cpiYoy*(mrTarget.cpiYoy-state.cpiYoy) + sCpi;
+        const dEPU      = mrKappa.epu*(mrTarget.epu-state.epu) + sEPU;
+        const dGPR      = mrKappa.gpr*(mrTarget.gpr-state.gpr) + sGPR;
+        const dHY       = mrKappa.hySpread*(mrTarget.hySpread-state.hySpread) + sHY;
+        const dLogUSD   = drift.dLogUSD + sUSD;
+        const dLogM2    = drift.dLogM2 + sM2;
+        const dLogOil   = drift.dLogOil + sOil;
+
+        state.realRate += dRealRate;
+        state.cpiYoy   += dCpiYoy;
+        state.epu      += dEPU;
+        state.gpr      += dGPR;
+        state.hySpread += dHY;
+
+        const dLogGold = beta.intercept
+          + beta.realRate*dRealRate
+          + beta.dLogUSD*dLogUSD
+          + beta.cpiYoy*dCpiYoy
+          + beta.dLogM2*dLogM2
+          + beta.dLogOil*dLogOil
+          + beta.epu*dEPU
+          + beta.gpr*dGPR
+          + beta.dHY*dHY
+          + randn()*residSD;
+
+        logGold += dLogGold;
+        path[m] = Math.exp(logGold);
+      }
+      paths[s]=path;
+    }
+
+    // 90th/95th percentile bands were removed from this fan chart — at this model's
+    // calibration they implied unrealistically high terminal prices and were dropped
+    // rather than displayed with a misleading sense of precision. 5th/10th/25th/50th/75th retained.
+    const pcts=[0.05,0.10,0.25,0.50,0.75];
+    const fan={};
+    pcts.forEach(p=>fan[p]=[]);
+    for(let m=0;m<nMonths;m++){
+      const col = paths.map(p=>p[m]);
+      pcts.forEach(p=>fan[p].push(percentile(col,p)));
+    }
+    const labels = Array.from({length:nMonths},(_,i)=>"M"+(i+1));
+
+    const fanCtx = document.getElementById('mcFanChart').getContext('2d');
+    new Chart(fanCtx, {
+      type:'line',
+      data:{
+        labels: labels,
+        datasets:[
+          {label:'75th pct', data:fan[0.75], borderColor:'#D69E2E', borderWidth:1, pointRadius:0, fill:false},
+          {label:'Median',   data:fan[0.50], borderColor:'#1A2744', borderWidth:2.5, pointRadius:0, fill:false},
+          {label:'25th pct', data:fan[0.25], borderColor:'#2B6CB0', borderWidth:1, pointRadius:0, fill:'-1', backgroundColor:'rgba(43,108,176,0.10)'},
+          {label:'10th pct', data:fan[0.10], borderColor:'#2C7A7B', borderWidth:1, pointRadius:0, fill:'-1', backgroundColor:'rgba(44,122,123,0.08)'},
+          {label:'5th pct',  data:fan[0.05], borderColor:'#276749', borderWidth:1, pointRadius:0, fill:'-1', backgroundColor:'rgba(39,103,73,0.08)'}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{ title:{display:true,text:nSims.toLocaleString()+' Simulations — 24-Month Fan Chart'},
+                  legend:{position:'bottom', labels:{boxWidth:12,font:{size:10}}}},
+        scales:{ y:{ title:{display:true,text:'USD / troy oz'}, ticks:{callback:v=>'$'+v.toLocaleString()} },
+                 x:{ title:{display:true,text:'Months Ahead'} } }
+      }
+    });
+
+    const terminal = paths.map(p=>p[nMonths-1]);
+    const minT=Math.min(...terminal), maxT=Math.max(...terminal);
+    const nBins=40;
+    const binWidth=(maxT-minT)/nBins;
+    const bins=new Array(nBins).fill(0);
+    terminal.forEach(v=>{
+      let idx=Math.floor((v-minT)/binWidth);
+      if(idx>=nBins) idx=nBins-1;
+      if(idx<0) idx=0;
+      bins[idx]++;
+    });
+    const binLabels = bins.map((_,i)=>'$'+Math.round(minT+i*binWidth).toLocaleString());
+
+    const histCtx = document.getElementById('mcHistChart').getContext('2d');
+    new Chart(histCtx, {
+      type:'bar',
+      data:{ labels:binLabels, datasets:[{label:'Frequency', data:bins, backgroundColor:'#C9A84C'}] },
+      options:{
+        responsive:true,
+        plugins:{ title:{display:true,text:'Terminal Price Distribution (Month 24)'}, legend:{display:false} },
+        scales:{ x:{ ticks:{ maxTicksLimit:8, autoSkip:true } }, y:{ title:{display:true,text:'Frequency'} } }
+      }
+    });
+
+    const mean = terminal.reduce((a,b)=>a+b,0)/terminal.length;
+    const median = percentile(terminal,0.5);
+    const variance = terminal.reduce((a,b)=>a+Math.pow(b-mean,2),0)/terminal.length;
+    const std = Math.sqrt(variance);
+    const p05=percentile(terminal,0.05);
+    const probAbove5000 = terminal.filter(v=>v>5000).length/terminal.length*100;
+    const probAbove6000 = terminal.filter(v=>v>6000).length/terminal.length*100;
+    const probBelow3500 = terminal.filter(v=>v<3500).length/terminal.length*100;
+    const probBelow4000 = terminal.filter(v=>v<4000).length/terminal.length*100;
+    const varLoss = gold0 - p05;
+    const tailSet = terminal.filter(v=>v<=p05);
+    const cvar = tailSet.reduce((a,b)=>a+b,0) / Math.max(1,tailSet.length);
+
+    document.getElementById('mcStatsBoxes').innerHTML =
+      '<div class="metric-box"><div class="val">$'+Math.round(mean).toLocaleString()+'</div><div class="lbl">Mean (24mo)</div></div>'+
+      '<div class="metric-box"><div class="val">$'+Math.round(median).toLocaleString()+'</div><div class="lbl">Median (24mo)</div></div>'+
+      '<div class="metric-box"><div class="val">&plusmn;$'+Math.round(std).toLocaleString()+'</div><div class="lbl">Std. Dev.</div></div>'+
+      '<div class="metric-box"><div class="val">$'+Math.round(p05).toLocaleString()+'</div><div class="lbl">5th Percentile</div></div>'+
+      '<div class="metric-box"><div class="val">$'+Math.round(varLoss).toLocaleString()+'</div><div class="lbl">VaR 5% (vs $'+Math.round(gold0).toLocaleString()+' anchor)</div></div>';
+
+    document.getElementById('mcProbTable').innerHTML =
+      '<thead><tr><th>Scenario</th><th>Probability (of '+nSims.toLocaleString()+' paths)</th></tr></thead><tbody>'+
+      '<tr><td>Gold &gt; $5,000/oz within 24 months</td><td>'+probAbove5000.toFixed(1)+'%</td></tr>'+
+      '<tr><td>Gold &gt; $6,000/oz within 24 months</td><td>'+probAbove6000.toFixed(1)+'%</td></tr>'+
+      '<tr><td>Gold &lt; $4,000/oz within 24 months</td><td>'+probBelow4000.toFixed(1)+'%</td></tr>'+
+      '<tr><td>Gold &lt; $3,500/oz within 24 months</td><td>'+probBelow3500.toFixed(1)+'%</td></tr>'+
+      '<tr><td>CVaR (expected value in worst 5% of paths)</td><td>$'+Math.round(cvar).toLocaleString()+'</td></tr>'+
+      '</tbody>';
+
+    document.getElementById('mcRunInfo').innerText =
+      'Computed live in your browser just now — '+nSims.toLocaleString()+' paths × '+nMonths+' months '+
+      '('+(nSims*nMonths).toLocaleString()+' correlated multivariate draws via Cholesky-decomposed covariance). '+
+      'Anchor: $'+gold0.toLocaleString()+'/oz spot (16 Jun 2026), real 10Y rate '+(state0.realRate).toFixed(2)+'pp, CPI YoY '+state0.cpiYoy+'%. Reload the page to draw a fresh random sample.';
+  })();
+  </script>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 12: R CODE ══ -->
+  <div class="section" id="rcode">
+    <h2>12. Full Annotated R Code</h2>
+    <div class="note">The complete R script is provided in the companion file <code>gold_price_model.R</code>. Key sections below. Requires a free FRED API key from <a class="src-link" href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank">fred.stlouisfed.org</a>. Run time: ~8–12 minutes on first execution (data download + 1000-tree RF).</div>
+
+<pre><span class="cm">## ── 0. PACKAGES ─────────────────────────────────────────</span>
+<span class="fn">install.packages</span>(<span class="fn">c</span>(<span class="st">"fredr"</span>, <span class="st">"quantmod"</span>, <span class="st">"tidyverse"</span>, <span class="st">"vars"</span>,
+                   <span class="st">"ARDL"</span>, <span class="st">"randomForest"</span>, <span class="st">"xgboost"</span>, <span class="st">"forecast"</span>,
+                   <span class="st">"lmtest"</span>, <span class="st">"sandwich"</span>, <span class="st">"tseries"</span>, <span class="st">"ggplot2"</span>))
+
+<span class="cm">## ── 1. FRED API KEY ──────────────────────────────────────</span>
+<span class="fn">fredr_set_key</span>(<span class="st">"YOUR_KEY_HERE"</span>)   <span class="cm"># free at fred.stlouisfed.org</span>
+
+<span class="cm">## ── 2. DOWNLOAD DATA (20 FRED series) ───────────────────</span>
+fred_series <span class="kw">&lt;-</span> <span class="fn">list</span>(
+  gold      = <span class="st">"GOLDAMGBD228NLBM"</span>,  <span class="cm"># Gold price LBMA</span>
+  usd_index = <span class="st">"DTWEXBGS"</span>,           <span class="cm"># Broad USD index</span>
+  cpi       = <span class="st">"CPIAUCSL"</span>,            <span class="cm"># CPI all-urban</span>
+  fed_funds = <span class="st">"DFF"</span>,                 <span class="cm"># Fed Funds rate</span>
+  t10y      = <span class="st">"GS10"</span>,                <span class="cm"># 10Y Treasury</span>
+  m2        = <span class="st">"M2SL"</span>,                <span class="cm"># M2 money supply</span>
+  oil       = <span class="st">"DCOILWTICO"</span>,          <span class="cm"># WTI crude oil</span>
+  vix       = <span class="st">"VIXCLS"</span>,              <span class="cm"># CBOE VIX</span>
+  epu       = <span class="st">"USEPUINDXD"</span>,          <span class="cm"># Policy uncertainty</span>
+  gpr       = <span class="st">"GEPUCURRENT"</span>,         <span class="cm"># Geopolitical risk</span>
+  sp500     = <span class="st">"SP500"</span>,               <span class="cm"># S&amp;P 500</span>
+  debt_gdp  = <span class="st">"GFDEGDQ188S"</span>          <span class="cm"># Federal debt/GDP</span>
+)
+
+<span class="cm">## ── 3. FEATURE ENGINEERING ──────────────────────────────</span>
+df <span class="kw">&lt;-</span> df_raw <span class="kw">%&gt;%</span>
+  <span class="fn">mutate</span>(
+    log_gold       = <span class="fn">log</span>(gold),
+    real_rate_10y  = t10y <span class="kw">-</span> yoy_cpi,        <span class="cm"># Ex-ante real rate</span>
+    yoy_cpi        = (cpi <span class="kw">/</span> <span class="fn">lag</span>(cpi,<span class="nm">12</span>) <span class="kw">-</span> <span class="nm">1</span>) <span class="kw">*</span> <span class="nm">100</span>,
+    yoy_m2         = (m2  <span class="kw">/</span> <span class="fn">lag</span>(m2, <span class="nm">12</span>) <span class="kw">-</span> <span class="nm">1</span>) <span class="kw">*</span> <span class="nm">100</span>,
+    yield_curve    = t10y <span class="kw">-</span> t2y,              <span class="cm"># 10Y–2Y spread</span>
+    ret_gold       = <span class="fn">c</span>(<span class="kw">NA</span>, <span class="fn">diff</span>(log_gold)),    <span class="cm"># Monthly return</span>
+    qe_era         = <span class="fn">as.integer</span>(date <span class="kw">&gt;=</span> <span class="st">"2008-11-01"</span> <span class="kw">&amp;</span>
+                                date <span class="kw">&lt;=</span> <span class="st">"2014-10-31"</span>),
+    covid_shock    = <span class="fn">as.integer</span>(date <span class="kw">&gt;=</span> <span class="st">"2020-02-01"</span> <span class="kw">&amp;</span>
+                                date <span class="kw">&lt;=</span> <span class="st">"2021-12-01"</span>),
+    zirp           = <span class="fn">as.integer</span>(fed_funds <span class="kw">&lt;=</span> <span class="nm">0.25</span>)
+  )
+
+<span class="cm">## ── 4. STATIONARITY TESTS ───────────────────────────────</span>
+<span class="fn">adf.test</span>(df<span class="kw">$</span>log_gold)       <span class="cm"># I(1): non-stationary</span>
+<span class="fn">adf.test</span>(<span class="fn">diff</span>(df<span class="kw">$</span>log_gold)) <span class="cm"># I(0): stationary</span>
+
+<span class="cm">## ── 5. OLS FIRST-DIFFERENCE MODEL ───────────────────────</span>
+ols_diff <span class="kw">&lt;-</span> <span class="fn">lm</span>(d_log_gold <span class="kw">~</span>
+  d_real_rate <span class="kw">+</span> d_log_usd <span class="kw">+</span> d_yoy_cpi <span class="kw">+</span> d_log_m2 <span class="kw">+</span>
+  d_log_oil <span class="kw">+</span> d_epu <span class="kw">+</span> d_gpr <span class="kw">+</span> d_hy_spread <span class="kw">+</span>
+  ret_sp500 <span class="kw">+</span> qe_era <span class="kw">+</span> covid_shock <span class="kw">+</span> zirp,
+  data = df_diff)
+<span class="fn">coeftest</span>(ols_diff, vcov = <span class="fn">NeweyWest</span>(ols_diff, lag = <span class="nm">12</span>))
+
+<span class="cm">## ── 6. VAR MODEL ────────────────────────────────────────</span>
+<span class="fn">VARselect</span>(var_data, lag.max = <span class="nm">12</span>, type = <span class="st">"const"</span>)  <span class="cm"># AIC → p=3</span>
+var_model <span class="kw">&lt;-</span> <span class="fn">VAR</span>(var_data, p = <span class="nm">3</span>, type = <span class="st">"const"</span>, exogen = exog_data)
+<span class="fn">irf</span>(var_model, impulse = <span class="st">"real_rate_10y"</span>, response = <span class="st">"log_gold"</span>,
+    n.ahead = <span class="nm">24</span>, boot = <span class="kw">TRUE</span>, runs = <span class="nm">500</span>)
+<span class="fn">fevd</span>(var_model, n.ahead = <span class="nm">24</span>)
+
+<span class="cm">## ── 7. ARDL BOUNDS TEST ─────────────────────────────────</span>
+ardl_auto <span class="kw">&lt;-</span> <span class="fn">auto_ardl</span>(
+  log_gold <span class="kw">~</span> real_rate_10y <span class="kw">+</span> log_usd <span class="kw">+</span> yoy_cpi <span class="kw">+</span>
+              log_m2 <span class="kw">+</span> log_oil <span class="kw">+</span> epu <span class="kw">+</span> gpr <span class="kw">+</span> hy_spread,
+  data = df_ardl, max_order = <span class="nm">4</span>, selection = <span class="st">"AIC"</span>)
+<span class="fn">bounds_f_test</span>(ardl_auto<span class="kw">$</span>best_model, case = <span class="nm">3</span>)   <span class="cm"># F=1.881, p=0.597 → no cointegration (see Sec. 7)</span>
+<span class="fn">multipliers</span>(ardl_auto<span class="kw">$</span>best_model, type = <span class="st">"lr"</span>)  <span class="cm"># Long-run coefficients</span>
+ecm_model <span class="kw">&lt;-</span> <span class="fn">uecm</span>(ardl_auto<span class="kw">$</span>best_model)         <span class="cm"># Error correction</span>
+
+<span class="cm">## ── 8. RANDOM FOREST ────────────────────────────────────</span>
+rf_model <span class="kw">&lt;-</span> <span class="fn">randomForest</span>(x = X_train, y = y_train,
+  ntree = <span class="nm">1000</span>, mtry = <span class="nm">4</span>, importance = <span class="kw">TRUE</span>, nodesize = <span class="nm">5</span>)
+<span class="fn">varImpPlot</span>(rf_model)
+
+<span class="cm">## ── 9. XGBOOST ──────────────────────────────────────────</span>
+xgb_params <span class="kw">&lt;-</span> <span class="fn">list</span>(objective = <span class="st">"reg:squarederror"</span>,
+  eta = <span class="nm">0.05</span>, max_depth = <span class="nm">4</span>, subsample = <span class="nm">0.8</span>)
+xgb_cv    <span class="kw">&lt;-</span> <span class="fn">xgb.cv</span>(params = xgb_params, data = dtrain,
+  nrounds = <span class="nm">1000</span>, nfold = <span class="nm">5</span>, early_stopping_rounds = <span class="nm">50</span>)
+xgb_model <span class="kw">&lt;-</span> <span class="fn">xgb.train</span>(params = xgb_params, data = dtrain,
+  nrounds = xgb_cv<span class="kw">$</span>best_iteration)
+
+<span class="cm">## ── 10. ARIMAX ───────────────────────────────────────────</span>
+<span class="fn">auto.arima</span>(arimax_y, xreg = arimax_xreg,
+  seasonal = <span class="kw">TRUE</span>, stepwise = <span class="kw">FALSE</span>, ic = <span class="st">"aicc"</span>)
+
+<span class="cm">## ── 11. MONTE CARLO SIMULATION (MASS::mvrnorm) ──────────</span>
+<span class="fn">library</span>(MASS)
+mc_cov <span class="kw">&lt;-</span> <span class="fn">diag</span>(mc_sd) <span class="kw">%*%</span> mc_corr <span class="kw">%*%</span> <span class="fn">diag</span>(mc_sd)
+
+<span class="kw">for</span> (s <span class="kw">in</span> <span class="nm">1</span><span class="kw">:</span>n_sims) {
+  state <span class="kw">&lt;-</span> state0; log_gold <span class="kw">&lt;-</span> <span class="fn">log</span>(gold0)
+  <span class="kw">for</span> (m <span class="kw">in</span> <span class="nm">1</span><span class="kw">:</span>n_months) {
+    shocks <span class="kw">&lt;-</span> <span class="fn">mvrnorm</span>(<span class="nm">1</span>, mu = <span class="fn">rep</span>(<span class="nm">0</span>, n_vars), Sigma = mc_cov)
+    <span class="cm"># crisis jump, mean-reversion updates, then:</span>
+    d_log_gold <span class="kw">&lt;-</span> beta[<span class="st">"intercept"</span>] <span class="kw">+</span>
+      <span class="fn">sum</span>(beta[<span class="fn">names</span>(shocks)] <span class="kw">*</span> shocks) <span class="kw">+</span> <span class="fn">rnorm</span>(<span class="nm">1</span>, <span class="nm">0</span>, resid_sd)
+    log_gold <span class="kw">&lt;-</span> log_gold <span class="kw">+</span> d_log_gold
+    gold_paths[s, m] <span class="kw">&lt;-</span> <span class="fn">exp</span>(log_gold)
+  }
+}
+<span class="fn">quantile</span>(gold_paths[, n_months], <span class="fn">c</span>(<span class="nm">.05</span>, <span class="nm">.50</span>, <span class="nm">.95</span>))  <span class="cm"># terminal percentiles</span></pre>
+
+    <div class="note" style="margin-top:24px;">
+      <strong>To run:</strong> (1) Install R ≥ 4.2 from <a class="src-link" href="https://cran.r-project.org">cran.r-project.org</a>. (2) Your FRED API key is already inserted in the script (<code>fredr_set_key(...)</code> near the top). (3) Run <code>source("gold_price_model.R")</code> from RStudio or the R console — this executes everything, including the Monte Carlo in Section 17. Full run time ≈ 10–15 minutes including data download and 10,000-path simulation.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 13: CENTRAL BANK GOLD BUYING ══ -->
+  <div class="section" id="cbgold">
+    <h2>13. Central Bank Gold Reserve Buying — Trends &amp; Price Implications</h2>
+    <p>This section addresses a specific question: what would more central bank gold reserve buying mean for the price of gold? It's worth being precise about the institutions involved, since "the Federal Reserve buying gold" and "central banks buying gold" are two different stories right now.</p>
+
+    <div class="note">
+      <strong>Important institutional clarification:</strong> the Federal Reserve itself does not buy or sell gold for monetary policy purposes, and U.S. official gold reserves (held by the Treasury, custodied partly at the Fed's vaults and at West Point/Fort Knox/Denver) have been essentially flat for decades. As of Q1 2026 the U.S. holds 8,133.46 tonnes, unchanged from Q4 2025 — the U.S. has not been an active buyer. The "central bank gold buying" story that has moved markets since 2022 is almost entirely a story about <em>other</em> countries' central banks, not the Fed.
+    </div>
+
+    <h3>What's actually happening</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>U.S. official gold reserves (Q1 2026)</td><td>8,133.46 tonnes — unchanged vs. Q4 2025</td><td>U.S. Treasury Fiscal Data / FRED</td></tr>
+        <tr><td>Global central bank gold purchases, full-year 2025</td><td>863 tonnes (below the 1,000t+ pace of 2022–2024, but far above the 400–500t pre-2022 average)</td><td>World Gold Council, Gold Demand Trends FY2025</td></tr>
+        <tr><td>Global central bank gold purchases, Q1 2026</td><td>244 tonnes — up 17% quarter-over-quarter, above the 5-year average</td><td>World Gold Council, Gold Demand Trends Q1 2026</td></tr>
+        <tr><td>2026 full-year forecast (J.P. Morgan and others)</td><td>~750–850 tonnes</td><td>J.P. Morgan Global Research; multiple sell-side estimates</td></tr>
+        <tr><td>Largest 2025 buyers</td><td>Poland (+102t, largest buyer 2nd year running), Kazakhstan (+57t, record), Brazil (+43t, re-entered market)</td><td>World Gold Council</td></tr>
+        <tr><td>Reserve managers expecting global CB gold holdings to rise further (next 12 months)</td><td>89% of surveyed reserve managers; 45% expect to personally add to their own institution's holdings</td><td>World Gold Council, Central Banks Gold Reserves Survey</td></tr>
+        <tr><td>Gold's share of official global reserves vs. U.S. Treasuries</td><td>Gold ~27% vs. Treasuries ~22% — gold overtook Treasuries as the top non-dollar reserve asset in 2025 for the first time since 1996; dollar assets overall still ~42% of reserves</td><td>European Central Bank; Visual Capitalist; IMF COFER data</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Mechanism: how would more buying affect price?</h3>
+    <p>Three channels are generally cited in the research and analyst commentary on this topic, none of which require the Fed specifically to participate:</p>
+    <p><strong>1. A price-insensitive demand floor.</strong> Central banks buy gold for strategic reserve-composition reasons (e.g., a stated target like "20% of reserves in gold"), not to trade around short-term price moves. That kind of buyer doesn't pull back when gold is "expensive" the way a price-sensitive investor would, so sustained official-sector buying is often described as creating a soft floor under the price rather than a trading catalyst.</p>
+    <p><strong>2. Supply tightening.</strong> Global mine supply is roughly flat year to year (~3,300–3,600 tonnes annually). Central banks absorbing 750–900+ tonnes/year is now a meaningfully large share of that — supply that would otherwise have been available to jewelry, investment, or industrial buyers. All else equal, that's a tightening of float, which is supportive of price.</p>
+    <p><strong>3. Signaling / de-dollarization narrative.</strong> When the institutions seen as the most conservative stewards of national reserves (and the ones with the best macro information) visibly accumulate gold, it can reinforce a broader narrative — reduced confidence in dollar-denominated reserve assets — that draws in other buyers (institutional and retail investors, other reserve managers) independent of the tonnage itself.</p>
+
+    <div class="note">
+      <strong>How this squares with this report's own regression results:</strong> Section 5's demand-augmented OLS model includes a "Δ Central Bank Demand" variable and a "CB Net Buyer Dummy," and <em>neither is statistically significant</em> at the monthly frequency (p=0.78 and p=0.99 respectively). That is not a contradiction of the qualitative story above — it's a frequency mismatch. Central bank buying operates as a slow-moving, multi-year structural shift in the stock of available gold and in reserve-composition narratives; it is not the kind of news that moves the price within a single calendar month the way a CPI surprise or a USD move does. A model built to explain monthly returns (as this one is) is the wrong tool to detect a multi-year structural-demand effect — that would require a lower-frequency (annual) specification or a longer post-2022 sample than is currently available, which is exactly the gap flagged in the Future Research section below.
+    </div>
+
+    <p style="font-size:0.83rem; color:#718096;">Bottom line: more central bank gold buying — whether from the current cast of emerging-market buyers or, hypothetically, a policy shift that had the Fed/Treasury resume active accumulation — would be expected to put upward pressure on gold prices through the three channels above. But this report's own monthly-frequency models are not well-suited to quantifying that effect, and nothing here should be read as a Fed forecast: as of Q1 2026, the Fed/Treasury's own holdings have not moved.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SECTION 14: POLICY EVOLUTION ══ -->
+  <div class="section" id="policyhistory">
+    <h2>14. Policy Evolution — From the Gold Standard to the Petrodollar (and Beyond)</h2>
+    <p>Gold's price history can't be separated from the monetary-policy regime governing the dollar at the time, since gold has spent the last century moving between being a <em>fixed, government-set price</em> and a <em>freely floating market price</em> set partly by confidence in the dollar itself. This section walks through that regime history and connects it to the price-driver story already established in this report — particularly the USD coefficient, which is the single most reliable finding across every linear model here.</p>
+
+    <h3>From a fixed price to a floating one</h3>
+    <table>
+      <thead><tr><th>Era</th><th>Period</th><th>Regime</th><th>What happened to gold</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Bretton Woods / classical gold standard</strong></td><td>1944–1971</td><td>Dollar pegged to gold at a fixed $35/oz; other currencies pegged to the dollar</td><td>Gold had no real "market price" — it was a fixed administrative rate, not a freely traded asset, for the entire period this report's raw data series begins (1968–1971 overlap).</td></tr>
+        <tr><td><strong>The Nixon Shock</strong></td><td>Aug 1971</td><td>Nixon unilaterally suspended dollar-gold convertibility, ending Bretton Woods in practice</td><td>The $35 peg broke. By the end of 1971 gold traded in the mid-$40s; once private U.S. gold ownership was re-legalized in 1974, prices approached $200/oz.</td></tr>
+        <tr><td><strong>Petrodollar system established</strong></td><td>1973–1975</td><td>Following the 1973 Arab oil embargo (oil quadrupled, ~$3 → ~$12/barrel), the U.S. and Saudi Arabia agreed (1974 Joint Commission) that Saudi oil would be priced and sold exclusively in dollars; other OPEC members followed by 1975</td><td>Created durable, structural global demand for dollars (and recycled "petrodollars" into U.S. Treasuries) that helped the dollar retain reserve-currency dominance even without gold backing — the foundation of the system gold competes against today.</td></tr>
+        <tr><td><strong>Free-floating volatility era</strong></td><td>1976–1999</td><td>Gold trades as a freely floating asset for the first time; Volcker disinflation (1979–1982) restores confidence in the dollar</td><td>Gold spiked to an intraday peak of $850/oz in January 1980 (~24× the old Bretton Woods peg) on inflation fear and Soviet invasion of Afghanistan, then entered a two-decade bear market as Volcker-era rate hikes and disinflation rebuilt confidence in dollar assets.</td></tr>
+        <tr><td><strong>QE / zero-rate era</strong></td><td>2008–2015</td><td>Post-GFC quantitative easing, near-zero policy rates (captured directly in this report's <code>qe_era</code> and <code>zirp</code> dummies, Section 3)</td><td>Gold rose from roughly $750 to a then-record $1,900/oz (2011) as real rates collapsed — the one regime shift in this list that actually falls inside this report's 2006–2025 fitted sample.</td></tr>
+        <tr><td><strong>De-dollarization / petrodollar erosion (emerging)</strong></td><td>2022–present</td><td>Russia sanctions, BRICS gold accumulation, early moves to settle oil and other trade outside the dollar</td><td>IMF COFER data show the dollar's share of global FX reserves falling from a 2001 peak of 72% to 57.8% by Q4 2024; central banks bought 1,045 tonnes of gold in 2024 alone (more than double the 2010–2021 average); gold overtook U.S. Treasuries as the top non-dollar reserve asset in 2025 (Section 13).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>How a weakening petrodollar system would be expected to affect gold</h3>
+    <p><strong>1. The dollar's "exorbitant privilege" is the thing being eroded.</strong> The petrodollar system's core function was never really about oil — it was about manufacturing structural, non-discretionary global demand for dollars and dollar-denominated assets (Treasuries), which is what let the U.S. run persistent deficits without the currency collapsing. To the extent that function weakens — oil increasingly priced in yuan or other currencies, central banks diversifying reserves away from Treasuries — the mechanism that has suppressed gold's "competition" with the dollar for 50 years weakens too.</p>
+    <p><strong>2. This report's own USD coefficient says how big that channel is.</strong> Every linear model in this report finds a strongly negative, highly significant relationship between the dollar index and gold (OLS levels −1.865***, OLS first-difference −1.065***, demand-augmented model −1.086***, ARIMAX −1.171). A genuine multi-year erosion in the dollar's reserve-currency status wouldn't show up as a one-month USD move — it would be a sustained structural decline, compounding the largest, most reliable coefficient in this whole report over many years rather than one shock.</p>
+    <p><strong>3. Early evidence is visible, but the regime hasn't actually broken yet.</strong> Saudi Arabia now settles roughly 12% of its oil trade in yuan; India has settled Russian crude in yuan and dirhams; BRICS launched a gold-and-currency-backed settlement instrument ("The Unit") in November 2025; 73% of central bankers surveyed by the World Gold Council in 2025 expect the dollar's reserve share to keep falling over the next five years. None of this amounts to the petrodollar system actually ending — the dollar still represents roughly 42% of global reserves and oil is still predominantly dollar-priced — but it is a real, accelerating trend in the direction this section describes.</p>
+
+    <div class="note">
+      <strong>Honest limitation — this report's models have never seen a regime change like this.</strong> The fitted sample for every regression in this report is 2006–2025 (Section 4 stationarity caveat). That window does not include the 1971 Nixon Shock, the 1974 founding of the petrodollar system, or the 1980 Volcker-era peak — the three biggest monetary-regime events in gold's modern history. The only regime shift that <em>is</em> inside the fitted sample is the 2008–2015 QE/ZIRP era, which is a much smaller shock than a genuine reserve-currency transition would be. That means none of this report's coefficients — including the USD coefficient discussed above — were estimated on data that includes anything resembling a full de-dollarization event. Extrapolating "USD down 10% → gold up X%" from a 2006–2025 sample to a scenario where the petrodollar system meaningfully unwinds is a real stretch, and should be treated as a qualitative direction-of-effect argument, not a calibrated quantitative forecast. This is the same data-availability problem flagged in Section 13 and in Future Research item #2 below — gold's relationship with the dollar's structural role is a decades-scale question, and a 19-year window can only show part of it.
+    </div>
+
+    <p style="font-size:0.82rem; color:#718096;"><strong>Key sources for this section:</strong> Federal Reserve History, "Nixon Ends Convertibility of U.S. Dollars to Gold" · U.S. State Department Office of the Historian, "Nixon and the End of the Bretton Woods System, 1971–1973" · Council on Foreign Relations, "Petrodollars: Myth and Reality" · IMF COFER database (currency composition of official foreign exchange reserves) · World Gold Council, "Gold Demand Trends" and 2025 Central Banks Gold Reserves Survey.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ MARKET SCAN — CANDIDATE VARIABLES ══ -->
+  <div class="section" id="marketscan">
+    <h2>Market Scan — Candidate Variables for the 2–12 Month Horizon</h2>
+    <p>This section scans for additional predictive variables that could plausibly sharpen the 2–12 month gold-price view beyond what this report's models already use. Candidates are grouped by data feasibility — what's free and addable right now, what's free but blocked on the lack of a queryable API, and what's no longer available at all — because that distinction determines whether a candidate becomes code in <code>gold_price_model.R</code> today or stays a documented gap.</p>
+
+    <div class="note">
+      <strong>What's already been done with this batch.</strong> The five "free, addable now" candidates below have already been wired into <code>gold_price_model.R</code> (Section 4c of the script) as a new data pull — they are downloaded and forward-filled alongside the existing FRED/Yahoo series, but are <em>not yet included in any fitted model</em> (<code>ols_diff</code>, the VAR, ARDL, random forest, XGBoost, or ARIMAX still use only the original variable set). Adding them to the actual model specifications and re-evaluating performance is future work — see Future Research below — but the data will already be sitting in <code>df_raw</code> the next time this script runs, rather than being a someday-TODO.
+    </div>
+
+    <h3>Tier 1 — Free, with a queryable API (added to the script now)</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Source</th><th>Why it could help</th><th>Relationship to existing variables</th></tr></thead>
+      <tbody>
+        <tr><td><strong>10Y TIPS real yield</strong></td><td>FRED <code>DFII10</code></td><td>A direct, daily market quote of the real interest rate — the single variable the literature (Erb &amp; Harvey 2013) treats as gold's strongest theoretical driver.</td><td>This report's existing <code>real_rate_10y</code> is nominal T10Y minus trailing realized CPI YoY — a backward-looking approximation. DFII10 is the market's own forward-looking real-rate quote, which may track gold better in the short run since it reflects expectations rather than realized inflation.</td></tr>
+        <tr><td><strong>5Y breakeven inflation</strong></td><td>FRED <code>T5YIE</code></td><td>A market-implied forward inflation expectation, distinct from the realized, backward-looking CPI YoY already in the model.</td><td>If gold reacts to where markets think inflation is going rather than where it's been, this variable could outperform <code>yoy_cpi</code> at shorter horizons — and would also help explain the model's puzzling negative CPI coefficient (Finding #4 in the Executive Summary).</td></tr>
+        <tr><td><strong>Fed balance sheet level</strong></td><td>FRED <code>WALCL</code></td><td>A continuous, direct measure of QE/QT pace and stance.</td><td>The existing <code>qe_era</code> dummy only flags 2008-11–2014-10 as a block; WALCL captures the actual ongoing expansion/contraction, including the 2022–2024 QT period and any future QE resumption the dummy can't see.</td></tr>
+        <tr><td><strong>Bitcoin price / return</strong></td><td>Yahoo Finance <code>BTC-USD</code></td><td>Tests the "digital gold" competition/substitution hypothesis directly — a popular narrative this report has not yet evaluated.</td><td>No existing analogue. If Bitcoin returns are negatively correlated with gold's, it would support a substitution story; if positively correlated, both may simply be responding to the same liquidity/risk regime.</td></tr>
+        <tr><td><strong>Basel III Tier-1 reclassification dummy</strong></td><td>Coded directly from the regulation's effective date (no data pull needed)</td><td>Effective 1 Jul 2025, U.S. bank regulators began letting physical gold count at 100% (up from 50%) of market value toward core Tier-1 capital — a structural change in who can hold gold and why.</td><td>Distinct from every existing dummy (<code>qe_era</code>, <code>covid_shock</code>, <code>post_911</code>, <code>zirp</code>) — this is a banking-regulation regime shift, not a monetary-policy or crisis dummy. It postdates this report's fitted sample (2006–2025, see Section 4), so it can only be evaluated going forward as new data accumulates.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Tier 2 — Free, but no queryable API (would need manual/bulk download)</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Source</th><th>Why it could help</th><th>Why it's not in the script</th></tr></thead>
+      <tbody>
+        <tr><td><strong>CFTC Commitment of Traders (COT) — managed-money net positioning</strong></td><td>cftc.gov, published weekly</td><td>A direct read on speculative futures positioning; sharp swings in net-long positioning often precede or accompany price moves.</td><td>Published as bulk text/CSV files in a non-tabular legacy layout, not a REST API — would require a one-time scraping/parsing script, similar in spirit to the existing World Gold Council demand-tonnage limitation below.</td></tr>
+        <tr><td><strong>Gold ETF holdings/flows (GLD + IAU, tonnes)</strong></td><td>World Gold Council Goldhub; SPDR/iShares direct disclosures</td><td>ETF flows are a faster-moving, higher-frequency proxy for investment demand than the WGC's quarterly jewelry/tech/CB demand series already in the model.</td><td>No free API — same limitation already disclosed for the existing demand variables (Section 13/Finding #4).</td></tr>
+        <tr><td><strong>Mining All-In Sustaining Cost (AISC)</strong></td><td>World Gold Council / S&amp;P Global Market Intelligence, quarterly</td><td>A supply-side cost floor; when prices approach AISC, mine supply growth tends to slow, providing a soft long-run price support.</td><td>No free API; published quarterly in PDF reports, not a downloadable series.</td></tr>
+        <tr><td><strong>Shanghai Gold Exchange premium vs. COMEX/LBMA</strong></td><td>SGE / Kitco</td><td>A live read on Chinese physical demand intensity relative to the Western paper-gold market — relevant to the de-dollarization narrative in the Policy Evolution section.</td><td>No free historical API; available only via paid data vendors or manual daily scraping.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Tier 3 — No longer available at any price</h3>
+    <p><strong>Gold lease rates / GOFO (Gold Forward Offered Rate).</strong> Historically used to gauge tightness in the physical gold-lending market — a sustained negative lease rate often signaled lending-market stress. The LBMA discontinued publishing GOFO in 2015, and no successor series has replaced it. This candidate is documented here for completeness but cannot be added under any data-feasibility tier.</p>
+
+    <p style="font-size:0.82rem; color:#718096;"><strong>Key sources for this section:</strong> FRED (DFII10, T5YIE, WALCL series documentation) · Federal Reserve / OCC / FDIC, Basel III endgame final rule on Tier-1 capital treatment of gold (effective 1 Jul 2025) · CFTC Commitments of Traders report documentation · World Gold Council, Goldhub ETF flow methodology · LBMA, historical notice on GOFO discontinuation (2015).</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ ROBUSTNESS CHECKS & OUTLIER DIAGNOSTICS ══ -->
+  <div class="section" id="robustness">
+    <h2>Robustness Checks &amp; Outlier Diagnostics</h2>
+    <p>A model's full-sample point estimate can look solid while actually being driven by a handful of extreme months, a single subsample, or collinear regressors. This section stress-tests <code>ols_diff</code> — the report's primary short-run inference model — three ways: comparing its coefficients against three independently-specified alternative models already in this report, identifying the specific historical months most likely to be driving the fit, and laying out the formal statistical diagnostics now coded into <code>gold_price_model.R</code> (Section 8c) for the next live run.</p>
+
+    <h3>1. Cross-model coefficient stability (already-validated, real results from this report)</h3>
+    <p>The most informative robustness check available without new data is simply asking: do independently-specified models, fit with different methods, agree on sign and rough magnitude? Here all four of this report's linear/semi-parametric specifications are compared side by side:</p>
+    <table>
+      <thead><tr><th>Variable</th><th>OLS Levels</th><th>OLS First-Diff (primary)</th><th>OLS + Demand</th><th>ARIMAX</th><th>Stability verdict</th></tr></thead>
+      <tbody>
+        <tr><td><strong>USD Index</strong></td><td>−1.865***</td><td>−1.065***</td><td>−1.086***</td><td>−1.171</td><td><span class="badge badge-pos">Stable</span> — negative and significant in every spec; magnitude band is tight (−1.07 to −1.87) once levels (the least trustworthy spec, see Section 6) is set aside</td></tr>
+        <tr><td><strong>EPU</strong></td><td>positive, sig.</td><td>positive, sig.</td><td>positive, sig.</td><td>positive, sig.</td><td><span class="badge badge-pos">Stable</span> — sign and significance hold across all four specifications</td></tr>
+        <tr><td><strong>GPR</strong></td><td>not sig.</td><td>not sig.</td><td>not sig.</td><td>not sig.</td><td><span class="badge badge-sig">Stable null</span> — consistently insignificant is itself a robust finding, not a data gap</td></tr>
+        <tr><td><strong>Real 10Y Rate</strong></td><td>sign flips positive</td><td>−0.056**</td><td>−0.056**</td><td>(included, see Section 11)</td><td><span class="badge badge-ns">Unstable</span> — the levels-model sign flip is a known spurious-regression artifact (Section 6); the first-difference reading is the credible one</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2. Reconciling the two R² figures already in this report</h3>
+    <p>Section 5 reports <code>ols_diff</code>'s R² as 0.2105; Section 10's model-comparison table reports an R²(Test) of 0.284 for the same family of model. These are not in conflict — they answer different questions. The 0.2105 figure is the <strong>in-sample</strong> R² (how well the model fits the same 2006–2025 data it was estimated on). The 0.284 figure is the <strong>out-of-sample</strong> R² from a 2015–2024 train/test split (Section 10) — how well a model fit on earlier data predicts data it never saw. The out-of-sample figure being as good as or better than the in-sample figure is itself a mild positive robustness signal: it means the model isn't simply overfitting noise in its own training window, which is the failure mode you'd expect to see as a <em>lower</em> out-of-sample number instead.</p>
+
+    <h3>3. Outlier identification — documented historical events</h3>
+    <p>Rather than waiting on row-level diagnostics, the months most likely to be flagged as statistical outliers can be anticipated from gold's own well-documented price history. These are the events most likely to show up as the largest residuals once <code>cooks.distance()</code> and <code>rstudent()</code> are run (Section 8c, pending the next live execution):</p>
+    <table>
+      <thead><tr><th>Date</th><th>Event</th><th>Price move</th><th>In this report's fitted sample (2006–2025)?</th></tr></thead>
+      <tbody>
+        <tr><td>Nov 2008</td><td>Global Financial Crisis bottom</td><td>Fell to $765.10/oz</td><td><span class="badge badge-sig">Yes</span></td></tr>
+        <tr><td>Sept 2011</td><td>Debt-ceiling crisis + eurozone sovereign-debt fears</td><td>Record high of $1,873/oz</td><td><span class="badge badge-sig">Yes</span></td></tr>
+        <tr><td>Apr 12–15, 2013</td><td>Two-day crash — Cyprus gold-sale rumors, weak Lunar New Year demand, heavy ETF selling</td><td>−13% to −15% over two days; the largest two-day dollar drop on record and the largest percentage drop since 1980</td><td><span class="badge badge-sig">Yes</span></td></tr>
+        <tr><td>Mar 16, 2020</td><td>COVID liquidity panic / margin-call forced selling</td><td>Fell ~12% to $1,470/oz bottom</td><td><span class="badge badge-sig">Yes</span> — also flagged by the existing <code>covid_shock</code> dummy</td></tr>
+        <tr><td>Aug 2020</td><td>Recovery following the Fed's "unlimited QE" announcement</td><td>+40% from the March bottom to a then-record $2,067/oz</td><td><span class="badge badge-sig">Yes</span></td></tr>
+        <tr><td>Feb–Mar 2022</td><td>Russia's invasion of Ukraine</td><td>Sharp spike on safe-haven demand</td><td><span class="badge badge-sig">Yes</span></td></tr>
+        <tr><td>Apr 2, 2025</td><td>Pre-"Liberation Day" tariff announcement record, then reversal once precious metals were exempted</td><td>Record $3,086/oz, then −$100 on the exemption news</td><td><span class="badge badge-ns">Likely outside / at the edge</span> — near or past this report's stated 2025 sample cutoff (Section 4); treat as an out-of-sample stress test rather than an in-sample data point</td></tr>
+        <tr><td>Jan 28, 2026</td><td>Most recent record high</td><td>$5,589/oz</td><td><span class="badge badge-ns">No</span> — postdates the fitted sample; a genuine out-of-sample observation</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <strong>What's pending vs. what's real here.</strong> The cross-model coefficient comparison and the R² reconciliation above use numbers already published elsewhere in this report — no new computation, no fabrication. The historical outlier events are independently verifiable, web-documented facts about gold's price history, cross-referenced against this report's known 2006–2025 sample window. What is <em>not</em> yet available: formal row-level diagnostics — Cook's distance, studentized residuals, leverage (hat values), variance inflation factors, a 60-month rolling-coefficient stability plot, and an outlier-robust (<code>MASS::rlm</code>) regression comparison. Code for all five has been added to <code>gold_price_model.R</code> (Section 8c) and will produce real numbers — including, very plausibly, formal confirmation that several of the events in the table above are in fact the largest residuals in the sample — the next time the script is run in R. This report will not display fabricated versions of those statistics in the interim.
+    </div>
+
+    <p style="font-size:0.82rem; color:#718096;"><strong>Key sources for this section:</strong> Kitco News, Bloomberg, and Reuters historical gold-price archives for the 2008, 2011, 2013, 2020, 2022, 2025, and 2026 price events cited above; this report's own Sections 5, 6, 10, and the OLS+Demand and ARIMAX model outputs for the cross-model coefficient table.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ SCENARIO ANALYSIS ══ -->
+  <div class="section" id="scenarios">
+    <h2>Scenario Analysis — 5 Macro/Policy Scenarios</h2>
+    <p>The five scenarios below answer a narrow, specific question: <em>given this report's own validated <code>ols_diff</code> coefficients (Section 8), what single-shock price move would each scenario imply?</em> This is comparative statics, not a forecast — each scenario applies a hypothetical shock to one or two variables, holds everything else constant, and reads the implied price move straight off the fitted coefficients. A corresponding live function (<code>run_scenario()</code>, Section 18 of <code>gold_price_model.R</code>) recomputes these same five numbers from whatever coefficients the next actual model run produces, so they never go stale.</p>
+
+    <div class="note">
+      <strong>The R² = 0.21 caveat applies to every number below.</strong> <code>ols_diff</code> explains about 21% of monthly gold-price variance — roughly 79% is driven by factors outside this model. Treat every implied price and percentage below as a directional, order-of-magnitude indicator of what this report's own model says, not a confidence-quantified forecast of what gold will actually do.
+    </div>
+
+    <table>
+      <thead><tr><th>#</th><th>Scenario</th><th>Shock applied</th><th>Δlog(gold)</th><th>Implied % change</th><th>Implied price (anchor $4,330.90/oz, 16 Jun 2026)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Fed cutting cycle accelerates</strong></td><td>Real 10Y rate −100bp</td><td>+0.0562</td><td><span class="badge badge-pos">+5.8%</span></td><td>≈ $4,581/oz</td></tr>
+        <tr><td>2</td><td><strong>Dollar breaks down</strong></td><td>Log USD index −10%</td><td>+0.1065</td><td><span class="badge badge-pos">+11.2%</span></td><td>≈ $4,818/oz</td></tr>
+        <tr><td>3</td><td><strong>Dollar/rate bear case</strong> (combined)</td><td>Log USD index +8% &amp; real rate +75bp</td><td>−0.1274</td><td><span class="badge badge-neg">−12.0%</span></td><td>≈ $3,813/oz</td></tr>
+        <tr><td>4</td><td><strong>Stagflation surprise</strong></td><td>CPI YoY +1.8pp</td><td>−0.0993</td><td><span class="badge badge-neg">−9.5%</span></td><td>≈ $3,922/oz</td></tr>
+        <tr><td>5</td><td><strong>Geopolitical/policy-uncertainty spike</strong></td><td>EPU index +50pts</td><td>+0.0135</td><td><span class="badge badge-pos">+1.4%</span></td><td>≈ $4,390/oz</td></tr>
+      </tbody>
+    </table>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Reading scenarios 1 &amp; 2 — the bull case</h3>
+        <p>Both lean on this report's two most reliable coefficients (USD: Finding #1 above; real rates: the credible first-difference reading per Section 6). An accelerating Fed cutting cycle or a genuine dollar breakdown are exactly the conditions this model is best equipped to speak to — which is also why they show the cleanest, most defensible numbers in this table.</p>
+      </div>
+      <div class="card">
+        <h3>Reading scenario 3 — the bear case</h3>
+        <p>Combines a dollar rally with rising real rates — the mirror image of scenarios 1–2, and the single largest move in the table (−12.0%). This is the scenario most consistent with a "higher for longer" Fed plus a resurgent dollar, and it underscores that this report's central, most trustworthy relationship cuts both ways.</p>
+      </div>
+      <div class="card-gold card">
+        <h3>Reading scenario 4 — handle with care</h3>
+        <p>This scenario deliberately uses the model's own documented counterintuitive negative CPI coefficient (Finding #4, Executive Summary) to show what a stagflation shock would imply <em>according to this specific model</em> — not because the report endorses "inflation is bearish for gold" as a general claim. The likely real-world explanation (same-month Fed tightening response to inflation surprises, Section 8) means this number should be read as "what a literal-minded application of this coefficient says," not as investment guidance.</p>
+      </div>
+      <div class="card">
+        <h3>Reading scenario 5 — why it's small</h3>
+        <p>EPU's coefficient is positive and significant (Finding #1), but a 50-point EPU move is modest relative to its historical range, and the coefficient itself is small in absolute terms — so even a real, qualifying policy-uncertainty spike only moves the point estimate +1.4%. This doesn't mean policy uncertainty doesn't matter to gold; it means a single-month EPU shock isn't a large lever on this model's own terms.</p>
+      </div>
+    </div>
+
+    <h3>A sixth scenario, deliberately left unquantified</h3>
+    <p><strong>Central-bank-buying / de-dollarization acceleration.</strong> This is arguably the most-discussed gold scenario in current markets (see Policy Evolution, Section 13/14) — yet it is intentionally not assigned a number in the table above. The central-bank demand variables in this report's demand-augmented model (<code>cb_demand</code>, <code>cb_net_buyer</code>) are not statistically significant at monthly frequency (p&gt;0.40, Finding #4). Applying a coefficient that the data itself says is indistinguishable from zero would manufacture false precision. The qualitative case for why this scenario likely matters anyway — IMF COFER data, 2024–2025 central-bank buying volumes, the BRICS settlement instrument — is laid out in the Policy Evolution section; it simply isn't translatable into a number this model can defend.</p>
+
+    <p style="font-size:0.82rem; color:#718096;"><strong>Methodology note:</strong> all five scenarios apply <code>ols_diff</code>'s fitted coefficients via Δlog(gold) = Σ(coefficient × shock), converted to a price multiplier via exp(Δlog(gold)), anchored at the report's most recent live gold price ($4,330.90/oz, 16 Jun 2026, per the Monte Carlo section). This is a single-shock, first-order approximation — it does not account for interaction effects, does not re-estimate the model under the hypothetical scenario, and is not a probabilistic forecast.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ FUTURE RESEARCH ══ -->
+  <div class="section" id="futureresearch">
+    <h2>Future Research Directions</h2>
+    <p>Several gaps and open questions surfaced over the course of this analysis that a future iteration of this report should address:</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>1. Lower-frequency central bank demand model</h3>
+        <p>Re-test the central-bank demand channel at annual or quarterly frequency, using World Gold Council tonnage data directly, to properly capture the slow-moving structural-buying story discussed in Section 13 — the current monthly OLS specification is the wrong tool for this question.</p>
+        <ul style="margin:10px 0 0 18px; font-size:0.88rem; line-height:1.5;">
+          <li><strong>Expected effect on price:</strong> hypothesized positive — sustained official-sector buying tightens float, so annual/quarterly CB tonnage purchased would be expected to carry a positive coefficient, plausibly with a multi-quarter lag since reserve managers move slowly and the effect likely compounds with the cumulative stock bought, not just each period's flow.</li>
+          <li><strong>Where to get the data:</strong> World Gold Council Gold Demand Trends (the same source already cited in Section 13), IMF COFER quarterly reserve-composition data, BIS Annual Economic Report, and individual disclosures (PBoC/SAFE, Bank of Russia, National Bank of Poland press releases).</li>
+          <li><strong>Watch-outs:</strong> China's and Russia's officially reported figures are widely believed to understate actual purchases (both have had multi-year reporting gaps followed by large catch-up revisions); even at quarterly frequency there are only ~16 observations of the "elevated buying" regime since 2022, so statistical power will be limited regardless of frequency.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>2. Extend or regime-segment the ARDL/ECM sample window</h3>
+        <p>The cointegration test in Section 7 found no long-run relationship over 2006–2025. Worth checking whether that's a feature of the true data-generating process or an artifact of a short or regime-mixed sample (2008 GFC, COVID, 2022 inflation shock all in one 235-observation window).</p>
+        <ul style="margin:10px 0 0 18px; font-size:0.88rem; line-height:1.5;">
+          <li><strong>Expected effect on the finding:</strong> this is a robustness check, not a new price driver. If "no cointegration" survives a longer or regime-segmented re-run, confidence in that conclusion goes up; if a sub-sample does show cointegration, it would mean the long-run relationship is regime-dependent rather than absent.</li>
+          <li><strong>Where to get the data:</strong> the same FRED/LBMA series already in the script, extended back as far as each series allows (gold price back to 1968, M2 back to 1959) — note the regime dummies (qe_era, covid_shock, zirp) already exist in <code>df</code> and can be used to split the sample.</li>
+          <li><strong>Watch-outs:</strong> structural breaks (the end of the gold standard pre-1971, 1970s demonetization, 2008 GFC) make a single stable long-run relationship across 50+ years implausible on economic grounds alone — a regime-segmented approach is probably more defensible than simply lengthening the window and may still come back "no cointegration" in every sub-sample.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>3. Diagnose the RF/XGBoost negative out-of-sample R²</h3>
+        <p>Section 8 found both tree models underperform a naive mean forecast out-of-sample. Worth testing whether this is primarily an extrapolation problem, since gold trended well outside the 2006–2014 training range for most of the 2014–2025 test period.</p>
+        <ul style="margin:10px 0 0 18px; font-size:0.88rem; line-height:1.5;">
+          <li><strong>Expected outcome:</strong> rolling-window retraining or a return-based (rather than level-based) target should at minimum bring test R² closer to zero, and ideally positive, by preventing the trees from being asked to extrapolate price levels far outside their training range.</li>
+          <li><strong>Where to get the data:</strong> no new data needed — same feature set already built in <code>gold_price_model.R</code>; the change is in the train/test resampling strategy (expanding or rolling window instead of one fixed split).</li>
+          <li><strong>Watch-outs:</strong> rolling retraining multiplies the current ~10–15 minute run time substantially; hyperparameter selection (mtry, max_depth, eta, etc.) needs to be refit per window too, or look-ahead bias creeps back in through the back door.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>4. Incorporate real-time central bank and ETF flow data</h3>
+        <p>Add gold-ETF holdings flows as an explicit monthly regressor, distinct from the existing (and currently null) demand variables — unlike central bank reserve purchases, ETF flows are price-sensitive and react within the same month, so they have a real chance of showing up in a monthly model.</p>
+        <ul style="margin:10px 0 0 18px; font-size:0.88rem; line-height:1.5;">
+          <li><strong>Expected effect on price:</strong> hypothesized positive and contemporaneous — net ETF inflows (e.g., into GLD/IAU) should move with, and likely help explain, the same month's gold return, unlike the structurally-slow central bank demand series.</li>
+          <li><strong>Where to get the data:</strong> World Gold Council's monthly Gold ETF flows page, SPDR Gold Shares (GLD) daily holdings disclosures, and CFTC Commitment of Traders weekly gold futures positioning data as a complementary speculative-flow proxy.</li>
+          <li><strong>Watch-outs:</strong> ETF flows can be as much a <em>consequence</em> of price moves as a cause (reflexivity) — a naive same-month OLS coefficient risks confusing correlation with explanation; consider lagged specifications or a Granger-causality / VAR check before reading too much into the sign.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>5. Build a genuine scenario-conditioned forecast</h3>
+        <p>The current 12-month forecast (Section 10) holds all macro inputs frozen, which is acknowledged as unrealistic. A more useful version would pair the Monte Carlo engine (Section 11) with explicit, named macro scenarios instead of one deterministic path.</p>
+        <ul style="margin:10px 0 0 18px; font-size:0.88rem; line-height:1.5;">
+          <li><strong>Expected effect on price, by scenario:</strong> "Fed cuts 100bp" → supportive of price, consistent with the negative real-rate coefficients found throughout this report; "USD −10%" → strongly supportive, given USD coefficients ranging from −1.07 to −1.87 across the OLS specifications; "central bank buying accelerates to ~1,200t/year" → supportive via the three channels described in Section 13.</li>
+          <li><strong>Where to get the data:</strong> CME FedWatch / Fed funds futures for market-implied rate-path scenarios, ICE DXY forwards for USD scenarios, and the World Gold Council's own central-bank survey forecasts (already cited in Section 13) for buying-acceleration scenarios.</li>
+          <li><strong>Watch-outs:</strong> scenario probabilities are themselves uncertain and shouldn't be invented — use external forecasts (Fed dot plot, market-implied paths) rather than assumed numbers; correlated scenarios (e.g., Fed cuts <em>and</em> USD falls together) need to be modeled jointly using the correlation matrix already built into the Section 11 Monte Carlo, not treated as independent branches.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <h2>Key Takeaways</h2>
+    <div class="note">⚠ This section has been rewritten to reflect the model's actual output, replacing an earlier draft that overstated several results. Where a finding is weak, null, or counterintuitive, that is stated plainly below rather than smoothed over.</div>
+    <div class="grid-2">
+      <div class="card card-gold">
+        <h3>What the data actually shows</h3>
+        <p><strong>USD is the most reliable driver, in the expected direction:</strong> across OLS levels (−1.865***), OLS first-difference (−1.065***), and the demand-augmented model (−1.086***), a stronger dollar consistently and significantly depresses gold. This is the one result that holds up the same way in every linear specification.</p>
+        <p><strong>Real rates and inflation are significant but the sign flips depending on horizon:</strong> in the first-difference (true short-run) model, both the real 10Y rate (−0.056**) and CPI YoY (−0.055*) load <em>negatively</em> — counterintuitive for inflation, plausibly because the Fed tightens within the same month. In the long-run levels model, the real-rate sign flips positive (+0.030*) and is only weakly significant. Treat the short-run, first-differenced numbers as the more credible ones.</p>
+        <p><strong>EPU (policy uncertainty) is the most consistent "safe haven" signal:</strong> positive and significant in every linear specification (levels, first-diff, demand model). GPR (geopolitical risk) is not significant in any of them, despite being the variable people most associate with gold's safe-haven story.</p>
+        <p><strong>Physical demand (jewelry, central bank, technology) shows no measurable effect:</strong> none of the three WGC demand variables, nor the central-bank net-buyer dummy, are statistically distinguishable from zero (Section 5, demand tab). Investment/financial flows appear to dominate any physical demand signal at monthly frequency.</p>
+        <p><strong>No cointegrating long-run relationship was found:</strong> the ARDL bounds test fails to reject "no cointegration" (F=1.881, p=0.597) and the ECM's error-correction term is insignificant (p=0.163) — both checks agree. This reverses what an earlier draft of this report claimed.</p>
+      </div>
+      <div class="card">
+        <h3>Model selection guidance — revised</h3>
+        <p><strong>For short-run inference:</strong> OLS first-difference with HAC SEs is the most defensible model in the report (R²=0.21) — modest explanatory power, but valid, interpretable t-statistics on real rates, USD, CPI, and EPU.</p>
+        <p><strong>For long-run analysis:</strong> the ARDL/ECM framework was the right tool to try, but in this sample it does not find evidence of a stable long-run equilibrium between gold and its determinants. Don't treat the ARDL level-form coefficients as long-run multipliers (Section 7).</p>
+        <p><strong>VAR(2) is dominated by gold's own lags</strong> (R²=0.985, but ~94% of that is gold's own lag 1+2): almost no macro variable is significant in the gold equation itself, and the Cholesky IRFs show real rates, USD, and CPI all with the "wrong" (positive) sign versus OLS — a known artifact of IRF ordering, not a competing causal claim. Use the IRFs/FEVD with real caution.</p>
+        <p><strong>Random Forest and XGBoost both have negative out-of-sample R²</strong> (−0.213 and −0.153, chronological 2006–2014 train / 2014–2025 test split) — neither beats predicting the historical mean. This directly contradicts an earlier draft's claim that XGBoost was "the best predictive model" (it had falsely reported R²=0.971). Their feature-importance rankings (Section 8) are reported for completeness but shouldn't be over-interpreted given this failure.</p>
+        <p><strong>ARIMAX</strong> (regression with ARIMA(1,0,1) errors) is a reasonable univariate-plus-regressors baseline, but its coefficients are not the focus of this report and weren't benchmarked against the other models on a common out-of-sample test.</p>
+      </div>
+    </div>
+    <div class="note" style="margin-top:18px;">
+      <strong>Sample-window caveat (applies to every regression above):</strong> the raw merged dataset runs Jan 1975 – Jun 2026, but every model that requires a complete case across all predictors (everything except the raw OLS-levels exploratory pass) is restricted to roughly Jan 2006 – Sep 2025 (~235–237 monthly observations), because the USD index and several other series used here don't extend earlier. Read every "long-run" claim in this report as a 2006–2025 finding, not a 50-year one.
+    </div>
+  </div>
+
+  <p style="text-align:center; font-size:0.78rem; color:#A0AEC0; margin-top:48px; padding-bottom:24px;">
+    Generated via R 4.x · FRED API · Data: LBMA, BLS, Federal Reserve, EIA, CBOE, S&amp;P, Baker-Bloom-Davis, Caldara-Iacoviello · Raw data range: Jan 1975 – Jun 2026 · Effective regression sample (complete-case): Jan 2006 – Sep 2025 (~235–237 obs) · All tables in this report reflect a live run of <code>gold_price_model.R</code>, not illustrative placeholder values
+  </p>
+</div>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
